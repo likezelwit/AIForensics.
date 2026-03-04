@@ -40,7 +40,7 @@
       border-radius: 12px;
       position: relative;
       cursor: pointer;
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, opacity 0.2s;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, opacity 0.2s, margin 0.3s;
       box-shadow: 0 8px 20px rgba(0,0,0,0.4);
       display: flex;
       align-items: center;
@@ -141,7 +141,6 @@
       overflow: hidden;
     }
 
-    /* Decorative background circle */
     #game-app::before {
       content: '';
       position: absolute;
@@ -211,9 +210,7 @@
       animation: shake-btn 0.5s infinite;
     }
 
-    .big-uno-btn:active {
-      transform: scale(0.9);
-    }
+    .big-uno-btn:active { transform: scale(0.9); }
 
     @keyframes shake-btn {
       0% { transform: rotate(0deg); }
@@ -236,7 +233,6 @@
 
     .hand-container .uno-card {
       margin: 0 -20px;
-      transition: transform 0.2s, margin 0.2s;
     }
 
     .bot-hand .card-back {
@@ -480,7 +476,7 @@
     
     let state = {
       deck: [], discard: [], players: [], turn: 0, dir: 1, color: 'red', 
-      isOver: false, active: false, saidUno: false, pendingWild: null
+      isOver: false, active: false, saidUno: false, pendingWild: null, isDealing: false
     };
 
     const $ = id => document.getElementById(id);
@@ -516,7 +512,6 @@
     }
 
     function updateUI() {
-      // Update Discard Pile
       const top = state.discard[state.discard.length - 1];
       if (top) {
         $discard.innerHTML = '';
@@ -525,22 +520,19 @@
         $discard.appendChild(cardEl);
       }
       
-      // Update Color Orb
       const cmap = { red: 'var(--uno-red)', blue: 'var(--uno-blue)', green: 'var(--uno-green)', yellow: 'var(--uno-yellow)' };
       $colorOrb.style.background = cmap[state.color] || 'transparent';
 
-      // Update Turn Indicator
       $turnInd.innerText = state.turn === 0 ? "Your Turn" : `${state.players[state.turn].name}'s Turn`;
       $turnInd.style.background = state.turn === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.2)';
 
-      // Update UNO Button
+      // UNO Button Logic
       if (state.turn === 0 && state.players[0].hand.length === 2 && !state.saidUno) {
         $unoBtn.classList.add('active');
       } else {
         $unoBtn.classList.remove('active');
       }
       
-      // Update Player Card Count
       $('player-card-count').innerText = `${state.players[0].hand.length} cards`;
     }
 
@@ -551,8 +543,12 @@
 
       me.hand.forEach((card, idx) => {
         const el = renderCard(card);
-        el.style.animationDelay = `${idx * 0.05}s`; // Cascade effect
-        el.classList.add('deal-anim');
+        
+        // Only apply deal animation during the dealing phase
+        if (state.isDealing) {
+            el.style.animationDelay = `${idx * 0.05}s`;
+            el.classList.add('deal-anim');
+        }
 
         const valid = isMyTurn && checkValid(card);
         if (valid) el.classList.add('playable');
@@ -571,16 +567,13 @@
         const div = document.createElement('div');
         div.className = 'flex flex-col items-center';
         
-        // Bot Name Tag
         const tag = document.createElement('div');
         const isTurn = state.turn === (i + 1);
         tag.className = `text-xs font-bold px-3 py-1 rounded-full mb-2 ${isTurn ? 'bg-white text-black' : 'bg-black/20 text-gray-400'}`;
         tag.innerText = p.name;
         
-        // Bot Hand (Visual representation)
         const handDiv = document.createElement('div');
         handDiv.className = 'bot-hand flex';
-        // Show max 5 cards visually for performance
         p.hand.slice(0, 5).forEach(() => {
            handDiv.innerHTML += `<div class="uno-card card-back"></div>`;
         });
@@ -621,7 +614,6 @@
     function playCard(pIdx, cIdx) {
       const card = state.players[pIdx].hand.splice(cIdx, 1)[0];
       state.discard.push(card);
-      state.saidUno = false; // Reset
       
       playSound('card');
       
@@ -633,16 +625,28 @@
         return;
       }
 
-      // Bot logic handles its own wild
+      // Check UNO Penalty for Player
+      if (pIdx === 0 && state.players[0].hand.length === 1 && !state.saidUno) {
+         setTimeout(() => {
+             alert("You forgot to say UNO! Draw 2 cards.");
+             state.players[0].hand.push(...drawCard(2));
+             renderHand();
+             updateUI();
+         }, 300);
+      }
+      
+      // Bot says UNO automatically
+      if (pIdx !== 0 && state.players[pIdx].hand.length === 1) {
+          console.log(`${state.players[pIdx].name} says UNO!`);
+      }
+
       if (card.c === 'black') {
         if (pIdx === 0) {
-          // Player picks color
           state.pendingWild = card;
           $colorPicker.classList.add('active');
-          updateUI(); // Update visual first
-          return; // Pause loop
+          updateUI();
+          return;
         } else {
-          // Bot picks best color
           state.color = pickBotColor(state.players[pIdx].hand);
         }
       } else {
@@ -655,23 +659,21 @@
 
     function applyEffect(card, pIdx) {
       if (card.v === 'S') {
-        // Skip next player
         state.turn = getNextIdx();
       } 
       else if (card.v === 'R') {
         state.dir *= -1;
-        // If 2 players, acts like Skip
         if (state.players.length === 2) state.turn = getNextIdx();
       } 
       else if (card.v === '+2') {
         const victim = getNextIdx();
         state.players[victim].hand.push(...drawCard(2));
-        state.turn = victim; // Skip
+        state.turn = victim;
       } 
       else if (card.v === '+4') {
         const victim = getNextIdx();
         state.players[victim].hand.push(...drawCard(4));
-        state.turn = victim; // Skip
+        state.turn = victim;
       }
     }
 
@@ -684,6 +686,7 @@
 
     function nextTurn() {
       state.turn = getNextIdx();
+      state.saidUno = false; 
       updateUI();
       renderHand();
       renderBots();
@@ -698,24 +701,19 @@
       if (state.isOver) return;
       const p = state.players[state.turn];
       
-      // Find best card
       let playable = p.hand.map((c, i) => ({c, i})).filter(o => checkValid(o.c));
       
       if (playable.length > 0) {
-        // Sort: +4 > +2 > Skip/Rev > Color Match > Wild
         playable.sort((a, b) => {
-            let score = (c) => (c.v === '+4' ? 10 : (c.v === '+2' ? 8 : (c.v === 'S' || c.v === 'R' ? 6 : (c.c !== 'black' ? 4 : 2)));
+            let score = (card) => (card.v === '+4' ? 10 : (card.v === '+2' ? 8 : (card.v === 'S' || card.v === 'R' ? 6 : (card.c !== 'black' ? 4 : 2)));
             return score(b.c) - score(a.c);
         });
         
-        // Simple randomization for "human" feel if scores are equal
         let choice = playable[0];
-        // If +4, try to save it if possible
-        if (choice.c.v === '+4' && playable.length > 1) choice = playable[1]; 
+        if (choice.c.v === '+4' && playable.length > 1 && Math.random() > 0.3) choice = playable[1]; 
         
         playCard(state.turn, choice.i);
       } else {
-        // Draw
         p.hand.push(...drawCard(1));
         playSound('draw');
         updateUI();
@@ -733,16 +731,26 @@
     // Game Init
     async function startGame() {
       initAudio();
-      const botCount = parseInt($('bot-count').innerText);
-      const pName = $('player-name').value || 'Player';
+      
+      // Robust parsing of bot count
+      const botCountEl = $('bot-count');
+      const botCount = parseInt(botCountEl.innerText.trim(), 10) || 3; 
+      
+      const pNameEl = $('player-name');
+      const pName = pNameEl.value || 'Player';
       
       state = {
         deck: createDeck(), discard: [], 
         players: [{name: pName, hand: [], isBot: false}],
-        turn: 0, dir: 1, isOver: false, active: true, saidUno: false
+        turn: 0, dir: 1, isOver: false, active: true, saidUno: false, isDealing: true
       };
-      for(let i=0; i<botCount; i++) state.players.push({name: `Bot ${i+1}`, hand: [], isBot: true});
+      
+      // Add bots
+      for(let i=0; i<botCount; i++) {
+          state.players.push({name: `Bot ${i+1}`, hand: [], isBot: true});
+      }
 
+      // UI Switch
       $lobby.classList.add('hidden');
       $game.classList.remove('hidden');
       $('player-name-display').innerText = pName;
@@ -752,14 +760,15 @@
         for(let p of state.players) {
           p.hand.push(drawCard()[0]);
           playSound('draw');
-          await sleep(100);
+          await sleep(80);
           renderHand(); renderBots(); updateUI();
         }
       }
+      
+      state.isDealing = false; 
 
       // Start Discard
       let start = drawCard()[0];
-      // Ensure not wild or action
       while(start.c === 'black' || ['S','R','+2'].includes(start.v)) {
         state.deck.unshift(start); state.deck = shuffle(state.deck);
         start = drawCard()[0];
@@ -769,7 +778,7 @@
       
       playSound('card');
       updateUI();
-      renderHand();
+      renderHand(); 
     }
 
     function endGame(winner) {
@@ -784,37 +793,59 @@
 
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    // --- Events ---
-    $('btn-start').onclick = startGame;
-    $('btn-restart').onclick = () => { $gameOver.classList.remove('active'); startGame(); };
-    $('btn-lobby').onclick = () => { $game.classList.add('hidden'); $lobby.classList.remove('hidden'); $gameOver.classList.remove('active'); };
-    
-    $('btn-bot-plus').onclick = () => { let v = parseInt($('bot-count').innerText); if(v < 5) $('bot-count').innerText = v+1; };
-    $('btn-bot-minus').onclick = () => { let v = parseInt($('bot-count').innerText); if(v > 1) $('bot-count').innerText = v-1; };
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Start Button
+        $('btn-start').addEventListener('click', startGame);
 
-    $draw.onclick = () => {
-      if (state.turn !== 0 || state.isOver || !state.active) return;
-      state.players[0].hand.push(...drawCard(1));
-      playSound('draw');
-      nextTurn();
-    };
+        // Restart/Lobby Buttons
+        $('btn-restart').addEventListener('click', () => {
+            $gameOver.classList.remove('active'); 
+            startGame();
+        });
+        $('btn-lobby').addEventListener('click', () => {
+            $game.classList.add('hidden'); 
+            $lobby.classList.remove('hidden'); 
+            $gameOver.classList.remove('active');
+        });
 
-    $unoBtn.onclick = () => {
-      state.saidUno = true;
-      $unoBtn.classList.remove('active');
-      $unoBtn.style.background = '#2a9d8f'; // Green flash
-      setTimeout(() => $unoBtn.style.background = '', 300);
-    };
+        // Bot Count Buttons
+        $('btn-bot-plus').addEventListener('click', () => {
+            let v = parseInt($('bot-count').innerText);
+            if(v < 5) $('bot-count').innerText = v+1;
+        });
+        
+        $('btn-bot-minus').addEventListener('click', () => {
+            let v = parseInt($('bot-count').innerText);
+            if(v > 1) $('bot-count').innerText = v-1;
+        });
 
-    // Color Picker Logic
-    document.querySelectorAll('.color-btn').forEach(b => {
-      b.onclick = () => {
-        state.color = b.dataset.color;
-        $colorPicker.classList.remove('active');
-        applyEffect(state.pendingWild, 0);
-        state.pendingWild = null;
-        nextTurn();
-      };
+        // Draw Pile
+        $draw.addEventListener('click', () => {
+          if (state.turn !== 0 || state.isOver || !state.active) return;
+          state.players[0].hand.push(...drawCard(1));
+          playSound('draw');
+          nextTurn();
+        });
+
+        // UNO Button
+        $unoBtn.addEventListener('click', () => {
+          state.saidUno = true;
+          $unoBtn.classList.remove('active');
+          $unoBtn.style.background = '#2a9d8f'; 
+          setTimeout(() => $unoBtn.style.background = '', 300);
+        });
+
+        // Color Picker Logic
+        document.querySelectorAll('.color-btn').forEach(b => {
+          b.addEventListener('click', () => {
+            state.color = b.dataset.color;
+            $colorPicker.classList.remove('active');
+            applyEffect(state.pendingWild, 0);
+            state.pendingWild = null;
+            nextTurn();
+          });
+        });
     });
 
     // Keyboard Shortcuts
