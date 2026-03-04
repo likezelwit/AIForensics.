@@ -8,16 +8,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0a12;
-      --fg: #f8f8f2;
+      --bg: #0d0d1a;
+      --fg: #f0f0f5;
+      --muted: #6b7280;
       --accent: #ff3366;
-      --card-width: 80px;
-      --card-height: 120px;
-      --uno-red: #e63946;
-      --uno-blue: #4361ee;
-      --uno-green: #06d6a0;
-      --uno-yellow: #ffd60a;
-      --uno-purple: #9d4edd;
+      --card-width: 85px;
+      --card-height: 127px;
+      --uno-red: #dc2626;
+      --uno-blue: #2563eb;
+      --uno-green: #059669;
+      --uno-yellow: #eab308;
+      --uno-purple: #7c3aed;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,31 +33,29 @@
     }
 
     ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: var(--uno-red); border-radius: 10px; }
 
-    /* Dynamic Background */
+    /* Enhanced Background */
     .dynamic-bg {
       position: fixed;
       inset: 0;
       z-index: -1;
-      transition: background 0.8s ease;
+      background: 
+        radial-gradient(ellipse at 15% 15%, rgba(220, 38, 38, 0.15) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 20%, rgba(37, 99, 235, 0.12) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 80%, rgba(5, 150, 105, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 70%, rgba(124, 58, 237, 0.08) 0%, transparent 40%),
+        linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 50%, #0d0d1a 100%);
     }
 
     .dynamic-bg::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: 
-        radial-gradient(ellipse at 20% 20%, rgba(230, 57, 70, 0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(67, 97, 238, 0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(6, 214, 160, 0.08) 0%, transparent 60%);
-      animation: bg-pulse 8s ease-in-out infinite;
-    }
-
-    @keyframes bg-pulse {
-      0%, 100% { opacity: 0.8; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.02); }
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
     }
 
     /* Floating particles */
@@ -64,41 +63,39 @@
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: -1;
+      z-index: 0;
       overflow: hidden;
     }
 
     .particle {
       position: absolute;
-      width: 4px;
-      height: 4px;
       border-radius: 50%;
-      opacity: 0.3;
-      animation: float-particle 20s infinite ease-in-out;
+      opacity: 0;
+      animation: float-particle 25s infinite ease-in-out;
     }
 
     @keyframes float-particle {
-      0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10% { opacity: 0.3; }
-      90% { opacity: 0.3; }
-      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      5% { opacity: 0.4; }
+      95% { opacity: 0.4; }
+      100% { transform: translateY(-20vh) scale(1); opacity: 0; }
     }
 
     /* Card Styling */
     .uno-card {
       width: var(--card-width);
       height: var(--card-height);
-      border-radius: 12px;
+      border-radius: 14px;
       position: relative;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       box-shadow: 
-        0 8px 25px rgba(0,0,0,0.4),
-        0 0 0 1px rgba(255,255,255,0.1) inset;
+        0 8px 32px rgba(0,0,0,0.4),
+        0 0 0 3px rgba(255,255,255,0.95) inset,
+        0 0 0 5px rgba(0,0,0,0.1) inset;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 4px solid rgba(255,255,255,0.95);
       background: #fff;
       transform-style: preserve-3d;
       overflow: hidden;
@@ -107,18 +104,18 @@
     .uno-card::before {
       content: '';
       position: absolute;
-      width: 140%;
-      height: 170%;
-      background: rgba(255,255,255,0.9);
+      width: 150%;
+      height: 180%;
+      background: rgba(255,255,255,0.92);
       border-radius: 50%;
-      transform: rotate(-30deg) scale(0.55);
+      transform: rotate(-30deg) scale(0.5);
       z-index: 0;
     }
 
     .card-inner {
       position: absolute;
-      inset: 8px;
-      border-radius: 8px;
+      inset: 10px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -129,157 +126,176 @@
       position: relative;
       z-index: 2;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 3.5rem;
+      font-size: 3.8rem;
       color: #fff;
-      text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+      text-shadow: 
+        3px 3px 0 rgba(0,0,0,0.25),
+        -1px -1px 0 rgba(255,255,255,0.2);
       line-height: 1;
     }
 
     .card-corner {
       position: absolute;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 1rem;
+      font-size: 1.1rem;
       color: inherit;
       z-index: 3;
+      font-weight: 400;
     }
 
-    .card-corner.top { top: 6px; left: 8px; }
-    .card-corner.bottom { bottom: 6px; right: 8px; transform: rotate(180deg); }
+    .card-corner.top { top: 8px; left: 10px; }
+    .card-corner.bottom { bottom: 8px; right: 10px; transform: rotate(180deg); }
 
-    .uno-card.red { background: linear-gradient(135deg, var(--uno-red) 0%, #ff6b6b 100%); }
-    .uno-card.blue { background: linear-gradient(135deg, var(--uno-blue) 0%, #74c0fc 100%); }
-    .uno-card.green { background: linear-gradient(135deg, var(--uno-green) 0%, #69db7c 100%); }
-    .uno-card.yellow { background: linear-gradient(135deg, var(--uno-yellow) 0%, #ffe066 100%); }
-    .uno-card.yellow .card-value { color: #333; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); }
+    .uno-card.red { background: linear-gradient(145deg, #ef4444 0%, #b91c1c 100%); }
+    .uno-card.blue { background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%); }
+    .uno-card.green { background: linear-gradient(145deg, #10b981 0%, #047857 100%); }
+    .uno-card.yellow { 
+      background: linear-gradient(145deg, #facc15 0%, #ca8a04 100%); 
+    }
+    .uno-card.yellow .card-value { 
+      color: #1a1a2e; 
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.3); 
+    }
+    .uno-card.yellow .card-corner { color: #1a1a2e; }
     
     /* Skip Card Design */
     .uno-card.skip .card-inner::after {
       content: '';
       position: absolute;
-      width: 60px;
-      height: 60px;
-      border: 6px solid rgba(255,255,255,0.9);
+      width: 55px;
+      height: 55px;
+      border: 7px solid rgba(255,255,255,0.95);
       border-radius: 50%;
     }
     .uno-card.skip .card-inner::before {
       content: '';
       position: absolute;
-      width: 70px;
-      height: 6px;
-      background: rgba(255,255,255,0.9);
+      width: 75px;
+      height: 7px;
+      background: rgba(255,255,255,0.95);
       transform: rotate(-45deg);
+      border-radius: 4px;
     }
 
     /* Reverse Card Design */
     .uno-card.reverse .card-inner {
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
     .uno-card.reverse .arrow {
-      font-size: 1.8rem;
-      color: rgba(255,255,255,0.9);
+      font-size: 2rem;
+      color: rgba(255,255,255,0.95);
     }
     .uno-card.reverse .arrow:last-child {
       transform: scaleX(-1);
     }
 
     /* Draw Two Card Design */
-    .uno-card.draw-two .card-value { font-size: 2rem; }
+    .uno-card.draw-two .card-value { font-size: 2.2rem; letter-spacing: 2px; }
     .uno-card.draw-two .plus-cards {
       position: absolute;
       display: flex;
-      gap: 2px;
+      gap: 3px;
     }
     .uno-card.draw-two .mini-card {
-      width: 25px;
-      height: 35px;
-      background: rgba(255,255,255,0.9);
-      border-radius: 4px;
+      width: 28px;
+      height: 38px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
-      font-weight: bold;
+      font-size: 0.9rem;
+      font-weight: 800;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     /* Wild Card Design */
     .uno-card.wild-card {
-      background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
-      border-color: #444;
+      background: linear-gradient(145deg, #374151 0%, #111827 100%);
+      border-color: rgba(255,255,255,0.8);
     }
     .uno-card.wild-card::before {
-      background: linear-gradient(135deg, 
-        var(--uno-red) 25%, 
-        var(--uno-yellow) 25%, 
-        var(--uno-yellow) 50%, 
-        var(--uno-green) 50%, 
-        var(--uno-green) 75%, 
-        var(--uno-blue) 75%);
-      transform: rotate(-30deg) scale(0.6);
+      background: conic-gradient(
+        var(--uno-red) 0deg 90deg,
+        var(--uno-yellow) 90deg 180deg,
+        var(--uno-green) 180deg 270deg,
+        var(--uno-blue) 270deg 360deg
+      );
+      transform: rotate(-30deg) scale(0.55);
       border-radius: 50%;
     }
     .uno-card.wild-card .card-value { 
       color: white; 
-      text-shadow: 0 0 15px rgba(255,255,255,0.8);
-      font-size: 2rem;
+      text-shadow: 0 0 20px rgba(255,255,255,0.6);
+      font-size: 1.8rem;
+      letter-spacing: 3px;
     }
 
     /* Wild +4 Design */
-    .uno-card.wild-draw .card-value { font-size: 1.5rem; }
+    .uno-card.wild-draw .card-value { font-size: 1.6rem; }
     .uno-card.wild-draw .stack-indicator {
       position: absolute;
-      bottom: 15px;
-      font-size: 1.2rem;
+      bottom: 18px;
+      font-size: 1rem;
       font-weight: bold;
       color: white;
+      letter-spacing: 2px;
     }
 
     .card-back {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      border: 4px solid #0f3460;
+      background: linear-gradient(145deg, #1e1e2f 0%, #0f0f1a 100%);
+      border: 4px solid #2a2a3f;
     }
     .card-back::before { display: none; }
-    .card-back::after {
-      content: 'UNO';
+    .card-back .card-logo {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       color: var(--uno-red);
-      transform: rotate(-15deg);
+      transform: rotate(-12deg);
       border: 3px solid var(--uno-red);
-      padding: 4px 10px;
-      border-radius: 8px;
-      text-shadow: none;
-      letter-spacing: 2px;
+      padding: 6px 14px;
+      border-radius: 10px;
+      letter-spacing: 3px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     }
 
     /* Playable Card */
     .uno-card.playable {
-      transform: translateY(-35px) scale(1.1);
+      transform: translateY(-30px) scale(1.08);
       z-index: 100;
       box-shadow: 
-        0 20px 40px rgba(0,0,0,0.4), 
-        0 0 30px rgba(255, 255, 100, 0.6),
-        0 0 60px rgba(255, 255, 100, 0.3);
+        0 20px 50px rgba(0,0,0,0.5), 
+        0 0 0 3px rgba(255,220,100,0.9),
+        0 0 40px rgba(255,220,100,0.5),
+        0 0 80px rgba(255,220,100,0.2);
     }
 
     .uno-card.playable:hover {
-      transform: translateY(-45px) scale(1.15);
+      transform: translateY(-40px) scale(1.15);
+      box-shadow: 
+        0 25px 60px rgba(0,0,0,0.5), 
+        0 0 0 4px rgba(255,220,100,1),
+        0 0 60px rgba(255,220,100,0.7),
+        0 0 100px rgba(255,220,100,0.3);
     }
 
-    /* Stack Card */
+    /* Stackable Card */
     .uno-card.stackable {
       box-shadow: 
-        0 0 30px rgba(255, 100, 100, 1), 
-        0 0 60px rgba(255, 50, 50, 0.8);
-      transform: translateY(-40px) scale(1.15);
-      animation: stack-pulse 0.5s infinite alternate;
+        0 0 0 3px rgba(255,100,100,1),
+        0 0 40px rgba(255,50,50,0.8),
+        0 0 80px rgba(255,50,50,0.4);
+      transform: translateY(-35px) scale(1.12);
+      animation: stack-pulse 0.6s infinite alternate ease-in-out;
     }
 
     @keyframes stack-pulse {
       to { 
         box-shadow: 
-          0 0 40px rgba(255, 100, 100, 1), 
-          0 0 80px rgba(255, 50, 50, 0.9);
+          0 0 0 4px rgba(255,100,100,1),
+          0 0 50px rgba(255,50,50,1),
+          0 0 100px rgba(255,50,50,0.6);
       }
     }
 
@@ -290,61 +306,10 @@
 
     @keyframes card-shake {
       0%, 100% { transform: translateX(0) rotate(0); }
-      25% { transform: translateX(-10px) rotate(-5deg); }
-      75% { transform: translateX(10px) rotate(5deg); }
-    }
-
-    /* Flying Card Animation */
-    .flying-card {
-      position: fixed;
-      z-index: 9999;
-      pointer-events: none;
-      transition: none;
-    }
-
-    @keyframes fly-to-discard {
-      0% { 
-        transform: translate(var(--start-x), var(--start-y)) scale(1) rotate(0deg); 
-        opacity: 1;
-      }
-      50% {
-        transform: translate(calc(var(--start-x) * 0.3), calc(var(--start-y) * 0.3)) scale(1.3) rotate(180deg);
-      }
-      100% { 
-        transform: translate(0, 0) scale(1) rotate(360deg); 
-        opacity: 1;
-      }
-    }
-
-    @keyframes fly-from-deck {
-      0% { 
-        transform: translate(var(--end-x), var(--end-y)) scale(0.5) rotate(-180deg); 
-        opacity: 0;
-      }
-      60% {
-        transform: translate(calc(var(--end-x) * 0.4), calc(var(--end-y) * 0.4)) scale(1.1) rotate(30deg);
-        opacity: 1;
-      }
-      100% { 
-        transform: translate(0, 0) scale(1) rotate(0deg); 
-        opacity: 1;
-      }
-    }
-
-    /* Card dealing animation */
-    @keyframes deal-card {
-      0% { 
-        transform: translate(-50vw, -50vh) rotate(720deg) scale(0); 
-        opacity: 0; 
-      }
-      100% { 
-        transform: translate(0, 0) rotate(0) scale(1); 
-        opacity: 1; 
-      }
-    }
-
-    .dealing {
-      animation: deal-card 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+      20% { transform: translateX(-12px) rotate(-3deg); }
+      40% { transform: translateX(12px) rotate(3deg); }
+      60% { transform: translateX(-8px) rotate(-2deg); }
+      80% { transform: translateX(8px) rotate(2deg); }
     }
 
     /* Layout */
@@ -362,8 +327,8 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 200px;
-      height: 200px;
+      width: 220px;
+      height: 220px;
       pointer-events: none;
       z-index: 5;
     }
@@ -372,8 +337,8 @@
       position: absolute;
       width: 100%;
       height: 100%;
-      animation: rotate-direction 4s linear infinite;
-      opacity: 0.12;
+      animation: rotate-direction 5s linear infinite;
+      opacity: 0.15;
     }
 
     .direction-arrow.clockwise { animation-direction: normal; }
@@ -383,8 +348,6 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-
-    .direction-arrow svg { width: 100%; height: 100%; }
 
     .game-table {
       position: relative;
@@ -399,94 +362,97 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      transition: all 0.5s ease;
+      gap: 12px;
+      transition: all 0.4s ease;
     }
 
-    .player-zone.top { top: 15px; left: 50%; transform: translateX(-50%); }
-    .player-zone.left { left: 15px; top: 50%; transform: translateY(-50%); }
-    .player-zone.right { right: 15px; top: 50%; transform: translateY(-50%); }
-    .player-zone.bottom { bottom: 15px; left: 50%; transform: translateX(-50%); }
+    .player-zone.top { top: 20px; left: 50%; transform: translateX(-50%); }
+    .player-zone.left { left: 20px; top: 50%; transform: translateY(-50%); }
+    .player-zone.right { right: 20px; top: 50%; transform: translateY(-50%); }
+    .player-zone.bottom { bottom: 20px; left: 50%; transform: translateX(-50%); }
 
     .player-info {
-      background: rgba(20, 20, 35, 0.95);
-      padding: 8px 20px;
-      border-radius: 30px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      background: rgba(15, 15, 30, 0.95);
+      padding: 10px 24px;
+      border-radius: 40px;
+      box-shadow: 
+        0 8px 32px rgba(0,0,0,0.4),
+        0 0 0 1px rgba(255,255,255,0.08) inset;
       display: flex;
       align-items: center;
-      gap: 10px;
-      border: 3px solid rgba(255,255,255,0.1);
-      transition: all 0.4s;
+      gap: 12px;
+      border: 2px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
     }
 
     .player-info.active {
       border-color: var(--uno-green);
       box-shadow: 
-        0 0 25px rgba(6, 214, 160, 0.6),
-        0 0 50px rgba(6, 214, 160, 0.3);
-      transform: scale(1.08);
+        0 0 30px rgba(5, 150, 105, 0.5),
+        0 0 60px rgba(5, 150, 105, 0.2),
+        0 8px 32px rgba(0,0,0,0.4);
+      transform: scale(1.06);
     }
 
-    .player-info.active::before {
+    .player-info.active::after {
       content: '';
       position: absolute;
-      inset: -3px;
-      border-radius: 33px;
+      inset: -4px;
+      border-radius: 44px;
       background: linear-gradient(45deg, var(--uno-green), var(--uno-blue));
       z-index: -1;
+      opacity: 0.4;
       animation: border-glow 2s linear infinite;
     }
 
     @keyframes border-glow {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.02); }
     }
 
     /* Thinking indicator */
     .player-info.thinking::after {
       content: '';
       position: absolute;
-      right: -30px;
-      width: 20px;
-      height: 20px;
+      right: -35px;
+      width: 24px;
+      height: 24px;
       border: 3px solid var(--uno-yellow);
       border-top-color: transparent;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.7s linear infinite;
+      inset: auto;
+      opacity: 1;
+      background: transparent;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Blocked state */
-    .player-info.blocked {
-      position: relative;
-      overflow: hidden;
-    }
-
     .player-info.blocked::before {
       content: 'SKIP';
       position: absolute;
       inset: 0;
-      background: rgba(230, 57, 70, 0.9);
+      background: linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(185, 28, 28, 0.95));
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       color: white;
       z-index: 10;
-      animation: skip-flash 0.3s ease-in-out;
-      border-radius: 30px;
+      animation: skip-flash 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-radius: 40px;
+      letter-spacing: 3px;
     }
 
     @keyframes skip-flash {
-      0% { transform: scale(0); }
+      0% { transform: scale(0); opacity: 0; }
       50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     /* Draw penalty indicator */
@@ -495,27 +461,27 @@
       border-color: var(--uno-red);
     }
 
-    .player-info.must-draw::after {
-      content: attr(data-draw-count);
+    .player-info.must-draw .draw-badge {
       position: absolute;
-      top: -15px;
-      right: -10px;
-      background: var(--uno-red);
+      top: -18px;
+      right: -12px;
+      background: linear-gradient(135deg, var(--uno-red), #b91c1c);
       color: white;
-      width: 35px;
-      height: 35px;
+      min-width: 38px;
+      height: 38px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
       font-size: 1rem;
-      box-shadow: 0 4px 10px rgba(230, 57, 70, 0.5);
-      animation: bounce-count 0.5s ease-in-out;
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.6);
+      animation: bounce-count 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 20;
     }
 
     @keyframes draw-pulse {
-      to { box-shadow: 0 0 35px rgba(230, 57, 70, 0.8); }
+      to { box-shadow: 0 0 40px rgba(220, 38, 38, 0.7); }
     }
 
     @keyframes bounce-count {
@@ -534,71 +500,62 @@
     .player-info.catchable::before {
       content: 'CATCH';
       position: absolute;
-      top: -20px;
+      top: -24px;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--uno-red);
+      background: linear-gradient(135deg, var(--uno-red), #b91c1c);
       color: white;
-      padding: 3px 10px;
-      border-radius: 8px;
-      font-size: 0.7rem;
+      padding: 4px 14px;
+      border-radius: 10px;
+      font-size: 0.75rem;
       font-weight: 800;
       z-index: 10;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
     }
 
     @keyframes catch-pulse {
-      to { box-shadow: 0 0 30px rgba(255, 214, 10, 0.8); }
-    }
-
-    /* Challenge indicator */
-    .player-info.challengeable::after {
-      content: 'CHALLENGE?';
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--uno-purple);
-      color: white;
-      padding: 3px 10px;
-      border-radius: 8px;
-      font-size: 0.65rem;
-      font-weight: 800;
-      animation: challenge-bounce 0.5s ease-in-out infinite alternate;
-    }
-
-    @keyframes challenge-bounce {
-      to { transform: translateX(-50%) translateY(-3px); }
+      to { box-shadow: 0 0 35px rgba(234, 179, 8, 0.7); }
     }
 
     .player-avatar {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      border: 3px solid rgba(255,255,255,0.2);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      font-size: 1.3rem;
+      border: 3px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .player-avatar svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
     }
 
     .card-count-badge {
-      background: var(--uno-red);
+      background: linear-gradient(135deg, var(--uno-red), #b91c1c);
       color: white;
       font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
+      padding: 5px 14px;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
     }
 
     /* Timer */
     .timer-ring {
       position: absolute;
-      bottom: -45px;
+      bottom: -50px;
       left: 50%;
       transform: translateX(-50%);
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
     }
 
     .timer-ring svg { transform: rotate(-90deg); }
@@ -619,19 +576,15 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       color: var(--fg);
     }
 
     /* Bot Cards */
     .bot-cards { display: flex; justify-content: center; }
-    .bot-cards.horizontal .uno-card { margin: 0 -25px; transform: scale(0.45); }
+    .bot-cards.horizontal .uno-card { margin: 0 -28px; transform: scale(0.42); }
     .bot-cards.vertical { flex-direction: column; }
-    .bot-cards.vertical .uno-card { margin: -35px 0; transform: scale(0.45); }
-
-    /* Partner cards (visible in team mode) */
-    .partner-cards { display: flex; justify-content: center; gap: 2px; }
-    .partner-cards .uno-card { transform: scale(0.5); margin: 0 -20px; cursor: default; }
+    .bot-cards.vertical .uno-card { margin: -40px 0; transform: scale(0.42); }
 
     /* Center Area */
     .center-play-area {
@@ -641,7 +594,7 @@
       transform: translate(-50%, -50%);
       display: flex;
       align-items: center;
-      gap: 30px;
+      gap: 40px;
       z-index: 10;
     }
 
@@ -649,59 +602,63 @@
       position: relative;
       width: var(--card-width);
       height: var(--card-height);
+      cursor: pointer;
     }
 
     .deck-pile .card-back {
       position: absolute;
       top: 0;
       left: 0;
-      cursor: pointer;
-      transition: transform 0.2s;
+      transition: transform 0.2s ease;
     }
 
-    .deck-pile .card-back:nth-child(1) { transform: translate(2px, 2px); }
-    .deck-pile .card-back:nth-child(2) { transform: translate(4px, 4px); }
-    .deck-pile:hover .card-back:last-child { transform: translate(6px, 6px) scale(1.05); }
+    .deck-pile .card-back:nth-child(1) { transform: translate(3px, 3px); }
+    .deck-pile .card-back:nth-child(2) { transform: translate(6px, 6px); }
+    .deck-pile:hover .card-back:last-child { 
+      transform: translate(9px, 9px) scale(1.05); 
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
 
     .deck-count {
       position: absolute;
-      bottom: -25px;
+      bottom: -28px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.8);
       color: white;
-      padding: 2px 10px;
-      border-radius: 10px;
-      font-size: 0.75rem;
-      font-weight: bold;
+      padding: 3px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .discard-pile {
       width: var(--card-width);
       height: var(--card-height);
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
-      border: 3px dashed rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      border: 3px dashed rgba(255,255,255,0.15);
       position: relative;
     }
 
     .color-indicator {
       position: absolute;
-      bottom: -50px;
+      bottom: -55px;
       left: 50%;
       transform: translateX(-50%);
-      width: 50px;
-      height: 50px;
+      width: 55px;
+      height: 55px;
       border-radius: 50%;
-      border: 4px solid rgba(255,255,255,0.3);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      transition: background 0.3s, box-shadow 0.3s;
+      border: 4px solid rgba(255,255,255,0.25);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      transition: all 0.4s ease;
     }
 
-    .color-indicator.red { background: var(--uno-red); box-shadow: 0 0 30px var(--uno-red); }
-    .color-indicator.blue { background: var(--uno-blue); box-shadow: 0 0 30px var(--uno-blue); }
-    .color-indicator.green { background: var(--uno-green); box-shadow: 0 0 30px var(--uno-green); }
-    .color-indicator.yellow { background: var(--uno-yellow); box-shadow: 0 0 30px var(--uno-yellow); }
+    .color-indicator.red { background: var(--uno-red); box-shadow: 0 0 35px var(--uno-red), 0 8px 25px rgba(0,0,0,0.4); }
+    .color-indicator.blue { background: var(--uno-blue); box-shadow: 0 0 35px var(--uno-blue), 0 8px 25px rgba(0,0,0,0.4); }
+    .color-indicator.green { background: var(--uno-green); box-shadow: 0 0 35px var(--uno-green), 0 8px 25px rgba(0,0,0,0.4); }
+    .color-indicator.yellow { background: var(--uno-yellow); box-shadow: 0 0 35px var(--uno-yellow), 0 8px 25px rgba(0,0,0,0.4); }
 
     /* Stack Counter */
     .stack-counter {
@@ -709,32 +666,34 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.95);
       color: white;
-      padding: 8px 20px;
-      border-radius: 20px;
+      padding: 10px 24px;
+      border-radius: 25px;
       font-weight: 900;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       z-index: 100;
       border: 2px solid var(--uno-red);
       animation: stack-pulse-counter 0.5s infinite alternate;
+      box-shadow: 0 8px 30px rgba(220, 38, 38, 0.5);
     }
 
     @keyframes stack-pulse-counter {
-      to { box-shadow: 0 0 30px rgba(230, 57, 70, 0.8); }
+      to { box-shadow: 0 0 40px rgba(220, 38, 38, 0.8); }
     }
 
     .stack-counter .plus-icon {
       background: var(--uno-red);
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 1.2rem;
     }
 
     /* In-game message */
@@ -743,31 +702,33 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.95);
+      background: rgba(10, 10, 20, 0.98);
       color: white;
-      padding: 20px 50px;
-      border-radius: 20px;
+      padding: 24px 60px;
+      border-radius: 25px;
       font-weight: 800;
-      font-size: 2rem;
+      font-size: 2.2rem;
       z-index: 300;
-      animation: message-pop 0.5s ease-out;
+      animation: message-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
       pointer-events: none;
-      border: 2px solid rgba(255,255,255,0.2);
-      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      letter-spacing: 2px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
 
     @keyframes message-pop {
       0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-      50% { transform: translate(-50%, -50%) scale(1.2); }
+      50% { transform: translate(-50%, -50%) scale(1.15); }
       100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     }
 
     /* Player Hand */
     .player-hand-area {
-      background: linear-gradient(180deg, rgba(15, 15, 26, 0.95) 0%, rgba(20, 20, 35, 0.98) 100%);
-      padding: 20px 10px 30px;
-      border-top: 2px solid rgba(255,255,255,0.1);
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+      background: linear-gradient(180deg, rgba(15, 15, 30, 0.92) 0%, rgba(20, 20, 40, 0.98) 100%);
+      padding: 25px 15px 35px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 -15px 50px rgba(0,0,0,0.4);
       z-index: 20;
     }
 
@@ -775,89 +736,108 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-      padding: 0 20px;
+      margin-bottom: 15px;
+      padding: 0 25px;
     }
 
-    .hand-actions { display: flex; gap: 10px; }
+    .hand-actions { display: flex; gap: 12px; }
 
     .hand-btn {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
       color: white;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 0.85rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      font-weight: 500;
     }
 
-    .hand-btn:hover { background: rgba(255,255,255,0.2); }
-    .hand-btn.active { background: var(--uno-green); border-color: var(--uno-green); }
+    .hand-btn:hover { 
+      background: rgba(255,255,255,0.15); 
+      transform: translateY(-2px);
+    }
+    .hand-btn.active { 
+      background: var(--uno-green); 
+      border-color: var(--uno-green);
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+    }
 
     .hand-container {
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
       gap: 5px;
-      min-height: 120px;
+      min-height: 127px;
+      padding: 5px 0;
     }
 
-    .hand-container .uno-card { margin: 0 -15px; }
+    .hand-container .uno-card { margin: 0 -18px; }
 
     /* UNO Button */
     .uno-btn-container {
       position: fixed;
-      right: 20px;
-      bottom: 150px;
+      right: 25px;
+      bottom: 160px;
       z-index: 50;
     }
 
     .big-uno-btn {
-      width: 80px;
-      height: 80px;
+      width: 90px;
+      height: 90px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--uno-red) 0%, #ff6b6b 100%);
-      border: 4px solid white;
+      background: linear-gradient(145deg, #ef4444 0%, #b91c1c 100%);
+      border: 5px solid white;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 2rem;
+      font-size: 2.2rem;
       color: white;
       cursor: pointer;
-      box-shadow: 0 8px 25px rgba(230, 57, 70, 0.4);
-      transition: all 0.2s;
+      box-shadow: 
+        0 10px 35px rgba(220, 38, 38, 0.5),
+        0 0 0 6px rgba(220, 38, 38, 0.2);
+      transition: all 0.2s ease;
       opacity: 0;
       pointer-events: none;
       transform: scale(0.8);
+      letter-spacing: 3px;
     }
 
     .big-uno-btn.active {
       opacity: 1;
       pointer-events: all;
       transform: scale(1);
-      animation: bounce-uno 0.6s infinite;
+      animation: bounce-uno 0.6s infinite ease-in-out;
+    }
+
+    .big-uno-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 
+        0 15px 45px rgba(220, 38, 38, 0.6),
+        0 0 0 8px rgba(220, 38, 38, 0.3);
     }
 
     @keyframes bounce-uno {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+      50% { transform: scale(1.08); }
     }
 
     /* Modals */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.9);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(15px);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s;
+      transition: opacity 0.3s ease;
     }
 
     .modal-overlay.active {
@@ -866,54 +846,40 @@
     }
 
     .glass-panel {
-      background: rgba(20, 20, 35, 0.98);
-      backdrop-filter: blur(20px);
-      border-radius: 25px;
-      padding: 2.5rem;
-      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
-      border: 2px solid rgba(255,255,255,0.1);
+      background: linear-gradient(145deg, rgba(20, 20, 40, 0.98), rgba(15, 15, 30, 0.98));
+      backdrop-filter: blur(25px);
+      border-radius: 30px;
+      padding: 3rem;
+      box-shadow: 
+        0 30px 100px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(255,255,255,0.1) inset;
+      border: 1px solid rgba(255,255,255,0.08);
       max-width: 90vw;
       max-height: 90vh;
       overflow-y: auto;
     }
 
     .color-btn {
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      border: 4px solid rgba(255,255,255,0.3);
+      border: 5px solid rgba(255,255,255,0.25);
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
     }
 
-    .color-btn:hover { transform: scale(1.2); }
-    .color-btn.red { background: var(--uno-red); }
-    .color-btn.red:hover { box-shadow: 0 0 40px var(--uno-red); }
-    .color-btn.blue { background: var(--uno-blue); }
-    .color-btn.blue:hover { box-shadow: 0 0 40px var(--uno-blue); }
-    .color-btn.green { background: var(--uno-green); }
-    .color-btn.green:hover { box-shadow: 0 0 40px var(--uno-green); }
-    .color-btn.yellow { background: var(--uno-yellow); }
-    .color-btn.yellow:hover { box-shadow: 0 0 40px var(--uno-yellow); }
-
-    /* Challenge Modal */
-    .challenge-modal { text-align: center; }
-    .challenge-options { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
-
-    .challenge-btn {
-      padding: 15px 30px;
-      border-radius: 15px;
-      font-weight: bold;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
+    .color-btn:hover { 
+      transform: scale(1.2) translateY(-5px); 
     }
-
-    .challenge-btn.challenge { background: var(--uno-purple); color: white; }
-    .challenge-btn.accept { background: var(--uno-green); color: white; }
-    .challenge-btn:hover { transform: scale(1.05); }
+    .color-btn.red { background: linear-gradient(145deg, #ef4444, #b91c1c); }
+    .color-btn.red:hover { box-shadow: 0 0 50px var(--uno-red); }
+    .color-btn.blue { background: linear-gradient(145deg, #3b82f6, #1d4ed8); }
+    .color-btn.blue:hover { box-shadow: 0 0 50px var(--uno-blue); }
+    .color-btn.green { background: linear-gradient(145deg, #10b981, #047857); }
+    .color-btn.green:hover { box-shadow: 0 0 50px var(--uno-green); }
+    .color-btn.yellow { background: linear-gradient(145deg, #facc15, #ca8a04); }
+    .color-btn.yellow:hover { box-shadow: 0 0 50px var(--uno-yellow); }
 
     /* Menu Screen */
     .menu-screen {
@@ -922,201 +888,247 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 30px;
       position: relative;
       overflow: hidden;
     }
 
     .menu-logo {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 12rem;
-      background: linear-gradient(135deg, var(--uno-red) 0%, var(--uno-yellow) 50%, var(--uno-green) 75%, var(--uno-blue) 100%);
+      font-size: 14rem;
+      background: linear-gradient(135deg, 
+        var(--uno-red) 0%, 
+        #ff6b6b 25%,
+        var(--uno-yellow) 50%, 
+        var(--uno-green) 75%, 
+        var(--uno-blue) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.3));
+      filter: drop-shadow(6px 6px 0 rgba(0,0,0,0.3));
       line-height: 1;
       position: relative;
       z-index: 1;
-      letter-spacing: 15px;
+      letter-spacing: 20px;
+      animation: logo-float 4s ease-in-out infinite;
+    }
+
+    @keyframes logo-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
 
     .menu-subtitle {
-      font-size: 1.2rem;
-      color: rgba(255,255,255,0.6);
-      margin-top: -20px;
-      margin-bottom: 40px;
-      letter-spacing: 8px;
+      font-size: 1.3rem;
+      color: rgba(255,255,255,0.5);
+      margin-top: -15px;
+      margin-bottom: 50px;
+      letter-spacing: 12px;
       text-transform: uppercase;
+      font-weight: 600;
     }
 
     .mode-card {
-      background: rgba(20, 20, 35, 0.95);
-      border-radius: 25px;
-      padding: 2.5rem;
-      width: 280px;
+      background: linear-gradient(145deg, rgba(20, 20, 40, 0.95), rgba(15, 15, 30, 0.98));
+      border-radius: 30px;
+      padding: 3rem;
+      width: 300px;
       cursor: pointer;
-      transition: all 0.3s;
-      border: 2px solid rgba(255,255,255,0.1);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 2px solid rgba(255,255,255,0.08);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.4);
       position: relative;
       z-index: 1;
     }
 
     .mode-card:hover {
-      transform: translateY(-10px) scale(1.02);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-      border-color: rgba(255,255,255,0.3);
+      transform: translateY(-15px) scale(1.03);
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+      border-color: rgba(255,255,255,0.2);
     }
 
     .mode-card.selected {
       border-color: var(--uno-green);
-      box-shadow: 0 0 30px rgba(6, 214, 160, 0.4);
+      box-shadow: 
+        0 0 40px rgba(5, 150, 105, 0.4),
+        0 25px 80px rgba(0,0,0,0.5);
     }
 
     .mode-icon {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 1.5rem;
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 1.8rem;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .mode-icon svg {
+      width: 55px;
+      height: 55px;
+      fill: white;
     }
 
     /* Lobby Screen */
     .lobby-screen {
       min-height: 100vh;
-      padding: 20px;
+      padding: 25px;
       position: relative;
     }
 
     .lobby-container {
-      max-width: 1200px;
+      max-width: 1300px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 300px 1fr 300px;
-      gap: 20px;
-      padding-top: 20px;
+      grid-template-columns: 320px 1fr 320px;
+      gap: 25px;
+      padding-top: 25px;
     }
 
     .lobby-panel {
-      background: rgba(20, 20, 35, 0.95);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(145deg, rgba(20, 20, 40, 0.95), rgba(15, 15, 30, 0.98));
+      border-radius: 25px;
+      padding: 25px;
+      box-shadow: 
+        0 15px 50px rgba(0,0,0,0.4),
+        0 0 0 1px rgba(255,255,255,0.05) inset;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
-    .profile-card { text-align: center; padding: 30px 20px; }
+    .profile-card { text-align: center; padding: 35px 25px; }
 
     .profile-avatar {
-      width: 120px;
-      height: 120px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
-      margin: 0 auto 15px;
-      background: linear-gradient(135deg, var(--uno-purple), var(--uno-blue));
+      margin: 0 auto 20px;
+      background: linear-gradient(145deg, var(--uno-purple), var(--uno-blue));
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 4rem;
-      border: 5px solid rgba(255,255,255,0.2);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 5px solid rgba(255,255,255,0.15);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    }
+
+    .profile-avatar svg {
+      width: 70px;
+      height: 70px;
+      fill: white;
     }
 
     .stat-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 20px;
+      gap: 12px;
+      margin-top: 25px;
     }
 
     .stat-box {
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      padding: 18px;
+      border-radius: 15px;
       text-align: center;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.2s ease;
+    }
+
+    .stat-box:hover {
+      background: rgba(255,255,255,0.08);
+      transform: translateY(-2px);
     }
 
     .stat-value {
-      font-size: 1.8rem;
+      font-size: 2rem;
       font-weight: 800;
       color: var(--uno-red);
     }
 
     .mascot-display {
       position: relative;
-      height: 200px;
-      background: linear-gradient(135deg, var(--uno-yellow) 0%, #ffe066 100%);
-      border-radius: 20px;
+      height: 220px;
+      background: linear-gradient(145deg, var(--uno-yellow), #ca8a04);
+      border-radius: 25px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       overflow: hidden;
+      box-shadow: 0 15px 50px rgba(234, 179, 8, 0.3);
     }
 
-    .mascot-img {
-      font-size: 8rem;
+    .mascot-display::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='80' fill='rgba(255,255,255,0.1)'/%3E%3Ccircle cx='70' cy='85' r='15' fill='rgba(0,0,0,0.1)'/%3E%3Ccircle cx='130' cy='85' r='15' fill='rgba(0,0,0,0.1)'/%3E%3Cpath d='M70 120 Q100 150 130 120' stroke='rgba(0,0,0,0.15)' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-size: 180px;
+      background-position: center;
+      background-repeat: no-repeat;
       animation: mascot-float 3s ease-in-out infinite;
     }
 
     @keyframes mascot-float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-12px) scale(1.02); }
     }
 
     .event-banner {
-      background: linear-gradient(135deg, var(--uno-red) 0%, #ff6b6b 100%);
+      background: linear-gradient(145deg, var(--uno-red), #b91c1c);
       color: white;
-      padding: 15px;
-      border-radius: 15px;
-      margin-bottom: 15px;
+      padding: 18px;
+      border-radius: 18px;
+      margin-bottom: 18px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
     }
 
     .event-banner::after {
       content: 'NEW';
       position: absolute;
-      top: 10px;
-      right: -20px;
+      top: 12px;
+      right: -22px;
       background: var(--uno-yellow);
-      color: #333;
-      padding: 5px 30px;
-      font-size: 0.7rem;
+      color: #1a1a2e;
+      padding: 5px 35px;
+      font-size: 0.75rem;
       font-weight: 800;
       transform: rotate(45deg);
+      letter-spacing: 1px;
     }
 
     .prepare-item {
       display: flex;
       align-items: center;
       gap: 15px;
-      padding: 15px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 12px;
-      margin-bottom: 10px;
+      padding: 16px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 15px;
+      margin-bottom: 12px;
       cursor: pointer;
-      transition: all 0.2s;
-      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.25s ease;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
     .prepare-item:hover {
       background: rgba(255,255,255,0.1);
-      transform: translateX(5px);
+      transform: translateX(8px);
+      border-color: rgba(255,255,255,0.15);
     }
 
     .prepare-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
+      width: 52px;
+      height: 52px;
+      border-radius: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
+      font-size: 1.3rem;
+      background: rgba(255,255,255,0.08);
+      color: white;
+      font-weight: bold;
     }
 
     .main-lobby-area {
@@ -1124,102 +1136,122 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 30px;
+      gap: 35px;
     }
 
     .room-preview {
-      background: rgba(20, 20, 35, 0.95);
-      border-radius: 25px;
-      padding: 40px;
+      background: linear-gradient(145deg, rgba(20, 20, 40, 0.95), rgba(15, 15, 30, 0.98));
+      border-radius: 30px;
+      padding: 45px;
       width: 100%;
-      max-width: 500px;
-      box-shadow: 0 15px 50px rgba(0,0,0,0.3);
-      border: 2px solid rgba(255,255,255,0.1);
+      max-width: 520px;
+      box-shadow: 
+        0 20px 70px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.08) inset;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
     .player-slots {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin: 30px 0;
+      gap: 18px;
+      margin: 35px 0;
     }
 
     .player-slot {
-      background: rgba(255,255,255,0.05);
-      border-radius: 15px;
-      padding: 20px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+      padding: 22px;
       text-align: center;
-      border: 2px dashed rgba(255,255,255,0.2);
-      transition: all 0.3s;
+      border: 2px dashed rgba(255,255,255,0.15);
+      transition: all 0.3s ease;
     }
 
     .player-slot.occupied {
       border-style: solid;
       border-color: var(--uno-green);
-      background: rgba(6, 214, 160, 0.1);
+      background: rgba(5, 150, 105, 0.08);
+      box-shadow: 0 0 25px rgba(5, 150, 105, 0.2);
     }
 
     .player-slot.enemy {
       border-color: var(--uno-red);
-      background: rgba(230, 57, 70, 0.1);
+      background: rgba(220, 38, 38, 0.08);
+      box-shadow: 0 0 25px rgba(220, 38, 38, 0.2);
     }
 
     .slot-avatar {
-      width: 60px;
-      height: 60px;
+      width: 65px;
+      height: 65px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      margin: 0 auto 10px;
+      background: rgba(255,255,255,0.08);
+      margin: 0 auto 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
+      border: 3px solid rgba(255,255,255,0.1);
+    }
+
+    .slot-avatar svg {
+      width: 32px;
+      height: 32px;
+      fill: rgba(255,255,255,0.4);
     }
 
     .start-game-btn {
       width: 100%;
-      padding: 20px;
-      font-size: 1.5rem;
+      padding: 22px;
+      font-size: 1.6rem;
       font-weight: 800;
       border: none;
-      border-radius: 20px;
+      border-radius: 25px;
       cursor: pointer;
-      transition: all 0.3s;
-      background: linear-gradient(135deg, var(--uno-green) 0%, #69db7c 100%);
+      transition: all 0.3s ease;
+      background: linear-gradient(145deg, var(--uno-green), #047857);
       color: white;
-      box-shadow: 0 10px 30px rgba(6, 214, 160, 0.3);
+      box-shadow: 
+        0 12px 40px rgba(5, 150, 105, 0.4),
+        0 0 0 3px rgba(5, 150, 105, 0.2);
+      letter-spacing: 2px;
     }
 
     .start-game-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 40px rgba(6, 214, 160, 0.4);
+      transform: translateY(-5px);
+      box-shadow: 
+        0 18px 50px rgba(5, 150, 105, 0.5),
+        0 0 0 5px rgba(5, 150, 105, 0.3);
     }
 
     /* Settings Modal */
     .settings-grid {
       display: grid;
       gap: 15px;
-      margin-top: 20px;
+      margin-top: 25px;
     }
 
     .setting-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
+      padding: 18px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 15px;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.2s ease;
+    }
+
+    .setting-item:hover {
+      background: rgba(255,255,255,0.08);
     }
 
     .toggle-switch {
-      width: 50px;
-      height: 26px;
+      width: 56px;
+      height: 30px;
       background: rgba(255,255,255,0.1);
-      border-radius: 13px;
+      border-radius: 15px;
       position: relative;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s ease;
     }
 
     .toggle-switch.active { background: var(--uno-green); }
@@ -1227,81 +1259,17 @@
     .toggle-switch::after {
       content: '';
       position: absolute;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       background: white;
       border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      transition: transform 0.3s;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
 
-    .toggle-switch.active::after { transform: translateX(24px); }
-
-    /* Gacha Animation */
-    .gacha-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.95);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-
-    .gacha-overlay.active {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .gacha-spinner {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      border: 8px solid transparent;
-      border-top-color: var(--uno-red);
-      border-right-color: var(--uno-yellow);
-      border-bottom-color: var(--uno-green);
-      border-left-color: var(--uno-blue);
-      animation: spin 1s linear infinite;
-      margin-bottom: 30px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .gacha-result {
-      background: rgba(20, 20, 35, 0.98);
-      padding: 30px 50px;
-      border-radius: 20px;
-      text-align: center;
-      transform: scale(0);
-      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      border: 2px solid rgba(255,255,255,0.2);
-    }
-
-    .gacha-overlay.active .gacha-result {
-      transform: scale(1);
-      transition-delay: 1.5s;
-    }
-
-    .result-avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      margin: 0 auto 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3.5rem;
-    }
-
-    /* Screen Management */
-    .screen { display: none; }
-    .screen.active { display: flex; }
+    .toggle-switch.active::after { transform: translateX(26px); }
 
     /* Game Over Results */
     .results-container { width: 100%; max-width: 600px; }
@@ -1309,24 +1277,25 @@
     .results-player {
       display: flex;
       align-items: center;
-      gap: 15px;
-      padding: 15px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 15px;
-      margin-bottom: 10px;
-      transition: all 0.3s;
-      border: 1px solid rgba(255,255,255,0.1);
+      gap: 18px;
+      padding: 18px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
     .results-player.winner {
-      background: rgba(6, 214, 160, 0.2);
-      transform: scale(1.02);
+      background: rgba(5, 150, 105, 0.15);
+      transform: scale(1.03);
       border-color: var(--uno-green);
+      box-shadow: 0 0 30px rgba(5, 150, 105, 0.3);
     }
 
     .results-rank {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       border-radius: 50%;
       background: var(--uno-red);
       color: white;
@@ -1334,23 +1303,27 @@
       align-items: center;
       justify-content: center;
       font-weight: 900;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .results-player.winner .results-rank { background: var(--uno-green); }
+    .results-player.winner .results-rank { 
+      background: linear-gradient(145deg, var(--uno-green), #047857); 
+    }
 
     .results-cards {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
-    .results-cards .uno-card { transform: scale(0.4); margin: -25px; }
+    .results-cards .uno-card { transform: scale(0.35); margin: -30px; }
 
     .results-points {
       margin-left: auto;
       font-weight: 900;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       color: var(--uno-red);
     }
 
@@ -1365,58 +1338,84 @@
 
     .confetti {
       position: absolute;
-      width: 10px;
-      height: 10px;
-      animation: confetti-fall 3s ease-in-out forwards;
+      border-radius: 2px;
+      animation: confetti-fall 3.5s ease-in-out forwards;
     }
 
     @keyframes confetti-fall {
       0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+      100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
     }
 
-    /* Turn indicator for multiplayer */
+    /* Turn indicator */
     .turn-indicator {
       position: fixed;
-      top: 20px;
+      top: 25px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.9);
-      padding: 10px 30px;
-      border-radius: 30px;
+      background: rgba(10, 10, 20, 0.95);
+      padding: 12px 35px;
+      border-radius: 35px;
       font-weight: 700;
       font-size: 1rem;
       z-index: 100;
-      border: 2px solid rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.15);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
     }
 
     .turn-indicator .player-dot {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
-      animation: pulse-dot 1s infinite;
+      animation: pulse-dot 1.2s infinite ease-in-out;
     }
 
     @keyframes pulse-dot {
       0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.7; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    /* Difficulty buttons */
+    .difficulty-btn {
+      transition: all 0.2s ease;
+    }
+    .difficulty-btn.active {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    /* Card dealing animation */
+    @keyframes deal-card {
+      0% { 
+        transform: translate(-50vw, -50vh) rotate(720deg) scale(0); 
+        opacity: 0; 
+      }
+      100% { 
+        transform: translate(0, 0) rotate(0) scale(1); 
+        opacity: 1; 
+      }
+    }
+
+    .dealing {
+      animation: deal-card 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
     }
 
     @media (max-width: 1024px) {
       .lobby-container { grid-template-columns: 1fr; }
-      .menu-logo { font-size: 8rem; }
+      .menu-logo { font-size: 9rem; letter-spacing: 12px; }
     }
 
     @media (max-width: 640px) {
-      :root { --card-width: 60px; --card-height: 90px; }
-      .card-value { font-size: 2.5rem; }
+      :root { --card-width: 65px; --card-height: 97px; }
+      .card-value { font-size: 2.8rem; }
       .menu-logo { font-size: 5rem; letter-spacing: 8px; }
       .mode-card { width: 100%; }
       .lobby-container { grid-template-columns: 1fr; }
-      .hand-container .uno-card { margin: 0 -20px; }
+      .hand-container .uno-card { margin: 0 -22px; }
     }
   </style>
 </head>
@@ -1424,19 +1423,10 @@
   <div class="dynamic-bg"></div>
   <div class="particles" id="particles"></div>
 
-  <!-- Confetti Container -->
   <div class="confetti-container" id="confetti-container"></div>
 
-  <!-- GACHA OVERLAY -->
-  <div id="gacha-overlay" class="gacha-overlay">
-    <div class="gacha-spinner"></div>
-    <div class="gacha-result" id="gacha-result"></div>
-  </div>
-
-  <!-- GAME MESSAGE -->
   <div id="game-message" class="game-message" style="display: none;"></div>
 
-  <!-- Turn Indicator -->
   <div id="turn-indicator" class="turn-indicator" style="display: none;">
     <div class="player-dot"></div>
     <span id="turn-text">Your Turn</span>
@@ -1447,32 +1437,32 @@
     <h1 class="menu-logo">UNO</h1>
     <p class="menu-subtitle">Ultimate Edition</p>
     
-    <div class="flex flex-wrap justify-center gap-8">
+    <div class="flex flex-wrap justify-center gap-10">
       <div class="mode-card" data-mode="solo" onclick="selectMode('solo')">
-        <div class="mode-icon" style="background: linear-gradient(135deg, var(--uno-blue), #74c0fc);">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="white" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+        <div class="mode-icon" style="background: linear-gradient(145deg, var(--uno-blue), #1d4ed8);">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
         </div>
-        <h3 class="text-2xl font-bold text-white mb-2">Solo Mode</h3>
-        <p class="text-gray-400 text-sm">Play against AI bots</p>
-        <div class="mt-4 flex justify-center gap-2">
-          <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">1v3</span>
+        <h3 class="text-2xl font-bold text-white mb-3">Solo Mode</h3>
+        <p class="text-gray-400 text-sm mb-4">Play against AI bots</p>
+        <div class="flex justify-center">
+          <span class="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-semibold">1 vs 3</span>
         </div>
       </div>
 
       <div class="mode-card" data-mode="2v2" onclick="selectMode('2v2')">
-        <div class="mode-icon" style="background: linear-gradient(135deg, var(--uno-red), #ff6b6b);">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="white" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        <div class="mode-icon" style="background: linear-gradient(145deg, var(--uno-red), #b91c1c);">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         </div>
-        <h3 class="text-2xl font-bold text-white mb-2">2v2 Team</h3>
-        <p class="text-gray-400 text-sm">Partner up! See partner cards!</p>
-        <div class="mt-4 flex justify-center gap-2">
-          <span class="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-semibold">2vs2</span>
+        <h3 class="text-2xl font-bold text-white mb-3">2v2 Team</h3>
+        <p class="text-gray-400 text-sm mb-4">Partner up! See partner cards!</p>
+        <div class="flex justify-center">
+          <span class="px-4 py-2 bg-red-500/20 text-red-400 rounded-full text-sm font-semibold">2 vs 2</span>
         </div>
       </div>
     </div>
 
-    <button onclick="showSettings()" class="mt-8 px-6 py-3 bg-white/10 rounded-xl text-white/70 hover:bg-white/20 transition flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    <button onclick="showSettings()" class="mt-10 px-8 py-4 bg-white/10 rounded-2xl text-white/70 hover:bg-white/20 transition-all flex items-center gap-3 font-semibold">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
       Settings
     </button>
   </div>
@@ -1481,40 +1471,39 @@
   <div id="lobby-screen" class="lobby-screen screen">
     <div class="lobby-container">
       <div class="lobby-panel profile-card">
-        <div class="profile-avatar" id="profile-avatar">😊</div>
+        <div class="profile-avatar">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+        </div>
         <input type="text" id="player-name-input" value="Player" 
-               class="w-full text-center text-xl font-bold bg-transparent border-b-2 border-white/20 focus:border-red-400 outline-none py-2 mb-4 text-white">
+               class="w-full text-center text-xl font-bold bg-transparent border-b-2 border-white/20 focus:border-red-400 outline-none py-3 mb-5 text-white">
         
         <div class="stat-grid">
           <div class="stat-box">
             <div class="stat-value">156</div>
-            <div class="text-xs text-gray-500 font-semibold">GAMES</div>
+            <div class="text-xs text-gray-500 font-semibold mt-1">GAMES</div>
           </div>
           <div class="stat-box">
             <div class="stat-value">72%</div>
-            <div class="text-xs text-gray-500 font-semibold">WIN RATE</div>
+            <div class="text-xs text-gray-500 font-semibold mt-1">WIN RATE</div>
           </div>
         </div>
       </div>
 
       <div class="main-lobby-area">
         <div class="w-full max-w-md">
-          <div class="mascot-display">
-            <div class="mascot-img">🦄</div>
-          </div>
+          <div class="mascot-display"></div>
         </div>
 
         <div class="room-preview">
           <h3 class="text-2xl font-bold text-center text-white mb-2" id="lobby-title">Solo Mode</h3>
           <div class="player-slots" id="player-slots"></div>
           
-          <!-- Difficulty selector for bots -->
-          <div class="mb-4">
-            <label class="text-sm text-gray-400 mb-2 block">Bot Difficulty</label>
-            <div class="flex gap-2">
-              <button class="flex-1 py-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 difficulty-btn active" data-diff="easy">Easy</button>
-              <button class="flex-1 py-2 rounded-lg bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 difficulty-btn" data-diff="medium">Medium</button>
-              <button class="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 difficulty-btn" data-diff="hard">Hard</button>
+          <div class="mb-5">
+            <label class="text-sm text-gray-400 mb-3 block font-semibold">Bot Difficulty</label>
+            <div class="flex gap-3">
+              <button class="flex-1 py-3 rounded-xl bg-green-500/20 text-green-400 border border-green-500/40 difficulty-btn active font-semibold transition-all" data-diff="easy">Easy</button>
+              <button class="flex-1 py-3 rounded-xl bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 difficulty-btn font-semibold transition-all" data-diff="medium">Medium</button>
+              <button class="flex-1 py-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/40 difficulty-btn font-semibold transition-all" data-diff="hard">Hard</button>
             </div>
           </div>
           
@@ -1523,24 +1512,28 @@
       </div>
 
       <div>
-        <div class="lobby-panel mb-4">
-          <h4 class="font-bold text-white mb-3">Events</h4>
+        <div class="lobby-panel mb-5">
+          <h4 class="font-bold text-white mb-4 text-lg">Events</h4>
           <div class="event-banner">
             <div class="font-bold text-lg">Weekend Special!</div>
-            <div class="text-sm opacity-90">Double XP all weekend</div>
+            <div class="text-sm opacity-90 mt-1">Double XP all weekend</div>
           </div>
         </div>
 
         <div class="lobby-panel">
-          <h4 class="font-bold text-white mb-3">Quick Actions</h4>
+          <h4 class="font-bold text-white mb-4 text-lg">Quick Actions</h4>
           <div class="prepare-item" onclick="backToMenu()">
-            <div class="prepare-icon" style="background: rgba(255,255,255,0.1);">←</div>
+            <div class="prepare-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </div>
             <div>
               <div class="font-semibold text-white">Back to Menu</div>
             </div>
           </div>
           <div class="prepare-item" onclick="showSettings()">
-            <div class="prepare-icon" style="background: rgba(255,255,255,0.1);">⚙</div>
+            <div class="prepare-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </div>
             <div>
               <div class="font-semibold text-white">Game Settings</div>
             </div>
@@ -1554,27 +1547,26 @@
   <div id="game-app" class="screen">
     <div class="game-table" id="game-table"></div>
 
-    <!-- Direction Indicator -->
     <div class="direction-indicator" id="direction-indicator">
       <div class="direction-arrow clockwise" id="direction-arrow">
         <svg viewBox="0 0 200 200">
           <defs>
             <linearGradient id="arrowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:var(--uno-green);stop-opacity:1" />
-              <stop offset="100%" style="stop-color:var(--uno-blue);stop-opacity:1" />
+              <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
             </linearGradient>
           </defs>
-          <path d="M100 20 A80 80 0 1 1 30 100" fill="none" stroke="url(#arrowGrad)" stroke-width="15" stroke-linecap="round"/>
-          <polygon points="25,80 40,105 55,85" fill="url(#arrowGrad)"/>
+          <path d="M100 20 A80 80 0 1 1 30 100" fill="none" stroke="url(#arrowGrad)" stroke-width="18" stroke-linecap="round"/>
+          <polygon points="22,82 40,108 58,88" fill="url(#arrowGrad)"/>
         </svg>
       </div>
     </div>
 
     <div class="center-play-area" id="center-play-area">
       <div class="deck-pile" id="draw-pile">
-        <div class="uno-card card-back"></div>
-        <div class="uno-card card-back"></div>
-        <div class="uno-card card-back"></div>
+        <div class="uno-card card-back"><div class="card-logo">UNO</div></div>
+        <div class="uno-card card-back"><div class="card-logo">UNO</div></div>
+        <div class="uno-card card-back"><div class="card-logo">UNO</div></div>
         <div class="deck-count" id="deck-count">0</div>
       </div>
       <div class="discard-pile" id="discard-pile"></div>
@@ -1583,14 +1575,14 @@
 
     <div class="player-hand-area" id="player-hand-area">
       <div class="hand-header">
-        <div class="text-sm text-gray-400">Your Hand (<span id="hand-count">0</span> cards)</div>
+        <div class="text-sm text-gray-400 font-semibold">Your Hand (<span id="hand-count">0</span> cards)</div>
         <div class="hand-actions">
           <button class="hand-btn" id="sort-color-btn" onclick="sortHand('color')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
             Color
           </button>
           <button class="hand-btn" id="sort-value-btn" onclick="sortHand('value')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
             Value
           </button>
         </div>
@@ -1605,9 +1597,9 @@
 
   <!-- COLOR PICKER MODAL -->
   <div id="color-picker" class="modal-overlay">
-    <div class="glass-panel p-10 flex flex-col items-center gap-6 text-center">
+    <div class="glass-panel p-12 flex flex-col items-center gap-8 text-center">
       <h3 class="text-3xl font-bold text-white">Choose a Color</h3>
-      <div class="flex gap-4 flex-wrap justify-center">
+      <div class="flex gap-5 flex-wrap justify-center">
         <button class="color-btn red" data-color="red"></button>
         <button class="color-btn blue" data-color="blue"></button>
         <button class="color-btn green" data-color="green"></button>
@@ -1616,73 +1608,60 @@
     </div>
   </div>
 
-  <!-- CHALLENGE MODAL -->
-  <div id="challenge-modal" class="modal-overlay">
-    <div class="glass-panel p-8 challenge-modal">
-      <h3 class="text-2xl font-bold text-white mb-4">Challenge Wild +4?</h3>
-      <p class="text-gray-400 mb-4" id="challenge-text">The previous player played a Wild +4. Do you want to challenge?</p>
-      <p class="text-sm text-gray-500 mb-6">If they had a playable card in hand, they draw 4 instead of you!</p>
-      <div class="challenge-options">
-        <button class="challenge-btn challenge" onclick="handleChallenge(true)">Challenge!</button>
-        <button class="challenge-btn accept" onclick="handleChallenge(false)">Accept (+4 cards)</button>
-      </div>
-    </div>
-  </div>
-
   <!-- SETTINGS MODAL -->
   <div id="settings-modal" class="modal-overlay">
-    <div class="glass-panel p-8 w-full max-w-md">
+    <div class="glass-panel p-10 w-full max-w-md">
       <h3 class="text-2xl font-bold text-white mb-6">Game Settings</h3>
       <div class="settings-grid">
         <div class="setting-item">
           <div>
             <div class="font-semibold text-white">Jump-In Rule</div>
-            <div class="text-xs text-gray-500">Play same card anytime</div>
+            <div class="text-xs text-gray-500 mt-1">Play same card anytime</div>
           </div>
           <div class="toggle-switch" id="toggle-jumpin" onclick="toggleSetting('jumpIn')"></div>
         </div>
         <div class="setting-item">
           <div>
             <div class="font-semibold text-white">Stack +2/+4</div>
-            <div class="text-xs text-gray-500">Stack draw cards</div>
+            <div class="text-xs text-gray-500 mt-1">Stack draw cards</div>
           </div>
           <div class="toggle-switch active" id="toggle-stacking" onclick="toggleSetting('stacking')"></div>
         </div>
         <div class="setting-item">
           <div>
             <div class="font-semibold text-white">7-0 Rule</div>
-            <div class="text-xs text-gray-500">Swap hands on 7, pass on 0</div>
+            <div class="text-xs text-gray-500 mt-1">Swap hands on 7, pass on 0</div>
           </div>
           <div class="toggle-switch" id="toggle-sevenzero" onclick="toggleSetting('sevenZero')"></div>
         </div>
         <div class="setting-item">
           <div>
             <div class="font-semibold text-white">Sound Effects</div>
-            <div class="text-xs text-gray-500">Play game sounds</div>
+            <div class="text-xs text-gray-500 mt-1">Play game sounds</div>
           </div>
           <div class="toggle-switch active" id="toggle-sound" onclick="toggleSetting('sound')"></div>
         </div>
         <div class="setting-item">
           <div>
             <div class="font-semibold text-white">Turn Timer</div>
-            <div class="text-xs text-gray-500">Time limit per turn</div>
+            <div class="text-xs text-gray-500 mt-1">Time limit per turn</div>
           </div>
           <div class="toggle-switch active" id="toggle-timer" onclick="toggleSetting('timer')"></div>
         </div>
       </div>
-      <button onclick="closeSettings()" class="mt-6 w-full py-3 bg-white/10 rounded-xl text-white font-semibold hover:bg-white/20 transition">Close</button>
+      <button onclick="closeSettings()" class="mt-8 w-full py-4 bg-white/10 rounded-2xl text-white font-semibold hover:bg-white/20 transition-all">Close</button>
     </div>
   </div>
 
   <!-- GAME OVER MODAL -->
   <div id="game-over" class="modal-overlay">
-    <div class="glass-panel p-8 flex flex-col items-center gap-4 text-center">
-      <div class="text-6xl" id="result-emoji">🎉</div>
+    <div class="glass-panel p-10 flex flex-col items-center gap-5 text-center">
+      <div class="text-7xl" id="result-emoji"></div>
       <h2 id="winner-text" class="text-4xl font-bold text-white">GAME OVER</h2>
       <div class="results-container" id="results-container"></div>
-      <div class="flex gap-4 mt-4 flex-wrap justify-center">
-        <button id="btn-restart" class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-400 rounded-xl font-bold text-white hover:from-green-400 hover:to-green-300 transition shadow-lg">Play Again</button>
-        <button id="btn-lobby" class="px-8 py-3 bg-gradient-to-r from-gray-600 to-gray-500 rounded-xl font-bold text-white hover:from-gray-500 hover:to-gray-400 transition shadow-lg">Lobby</button>
+      <div class="flex gap-5 mt-5 flex-wrap justify-center">
+        <button id="btn-restart" class="px-10 py-4 bg-gradient-to-r from-green-500 to-green-400 rounded-2xl font-bold text-white hover:from-green-400 hover:to-green-300 transition-all shadow-lg">Play Again</button>
+        <button id="btn-lobby" class="px-10 py-4 bg-gradient-to-r from-gray-600 to-gray-500 rounded-2xl font-bold text-white hover:from-gray-500 hover:to-gray-400 transition-all shadow-lg">Lobby</button>
       </div>
     </div>
   </div>
@@ -1695,8 +1674,17 @@
     const SPECIAL_VALUES = ['S', 'R', '+2'];
     const WILD_VALUES = ['W', '+4'];
     const BOT_NAMES = ['Alex', 'Blake', 'Casey', 'Drew', 'Ellis', 'Flynn', 'Harper', 'Jordan'];
-    const BOT_AVATARS = ['😎', '🤖', '🎭', '👾', '🦊', '🐱', '🦄', '🐸'];
-    const TEAM_COLORS = ['#e63946', '#4361ee'];
+    const BOT_AVATARS = [
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
+      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>'
+    ];
+    const TEAM_COLORS = ['#dc2626', '#2563eb'];
     const TURN_TIME = 15;
 
     // ==========================
@@ -1713,7 +1701,6 @@
 
     // ==========================
     // --- GAME STATE ---
-    // Multiplayer-ready: All players treated equally
     // ==========================
     let gameMode = 'solo';
     let state = {
@@ -1735,8 +1722,7 @@
       timerInterval: null,
       blockedPlayer: null,
       mustDrawPlayer: null,
-      lastPlayedBy: null,
-      challengePending: false
+      lastPlayedBy: null
     };
 
     // ==========================
@@ -1767,7 +1753,6 @@
         timer: { type: 'sine', freq: [800, 600], dur: 0.1, vol: 0.04 },
         reverse: { type: 'sine', freq: [300, 500, 300], dur: 0.3, vol: 0.06 },
         uno: { type: 'sine', freq: [400, 600, 800], dur: 0.4, vol: 0.07 },
-        challenge: { type: 'sawtooth', freq: [400, 200], dur: 0.2, vol: 0.05 },
         jumpin: { type: 'sine', freq: [800, 1000, 800], dur: 0.2, vol: 0.06 }
       };
       
@@ -1798,15 +1783,17 @@
     // ==========================
     function createParticles() {
       const container = document.getElementById('particles');
-      const colors = ['#e63946', '#4361ee', '#06d6a0', '#ffd60a'];
+      const colors = ['#dc2626', '#2563eb', '#059669', '#eab308'];
       
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 25; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
         particle.style.left = Math.random() * 100 + '%';
+        particle.style.width = (3 + Math.random() * 4) + 'px';
+        particle.style.height = particle.style.width;
         particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-        particle.style.animationDelay = Math.random() * 15 + 's';
-        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (20 + Math.random() * 15) + 's';
         container.appendChild(particle);
       }
     }
@@ -1828,14 +1815,15 @@
     }
 
     function getRandomBot() {
+      const idx = Math.floor(Math.random() * BOT_NAMES.length);
       return {
-        name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)],
-        avatar: BOT_AVATARS[Math.floor(Math.random() * BOT_AVATARS.length)]
+        name: BOT_NAMES[idx],
+        avatar: BOT_AVATARS[idx]
       };
     }
 
     function getPlayerColor(idx) {
-      const colors = ['#e63946', '#4361ee', '#06d6a0', '#ffd60a', '#9d4edd'];
+      const colors = ['#dc2626', '#2563eb', '#059669', '#eab308', '#7c3aed'];
       return colors[idx % colors.length];
     }
 
@@ -1867,7 +1855,6 @@
       const discardRect = discardPile.getBoundingClientRect();
       const cardRect = cardElement.getBoundingClientRect();
       
-      // Create flying card clone
       const flyingCard = cardElement.cloneNode(true);
       flyingCard.className = cardElement.className + ' flying-card';
       flyingCard.style.position = 'fixed';
@@ -1880,15 +1867,9 @@
       flyingCard.style.pointerEvents = 'none';
       document.body.appendChild(flyingCard);
       
-      // Hide original
       cardElement.style.opacity = '0';
       
-      // Calculate distance
-      const startX = cardRect.left - discardRect.left;
-      const startY = cardRect.top - discardRect.top;
-      
-      // Animate to center
-      flyingCard.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      flyingCard.style.transition = 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
       
       await sleep(10);
       
@@ -1896,11 +1877,9 @@
       flyingCard.style.top = discardRect.top + 'px';
       flyingCard.style.transform = 'rotate(' + (360 + Math.random() * 180) + 'deg) scale(1.1)';
       
-      await sleep(400);
+      await sleep(350);
       
-      // Remove flying card
       flyingCard.remove();
-      
       playSound('card');
     }
 
@@ -1909,35 +1888,33 @@
       const deckRect = deckPile.getBoundingClientRect();
       const targetRect = targetContainer.getBoundingClientRect();
       
-      // Create flying card (face down initially)
       const flyingCard = document.createElement('div');
       flyingCard.className = 'uno-card card-back flying-card';
       flyingCard.style.position = 'fixed';
       flyingCard.style.left = deckRect.left + 'px';
       flyingCard.style.top = deckRect.top + 'px';
-      flyingCard.style.width = '80px';
-      flyingCard.style.height = '120px';
+      flyingCard.style.width = '85px';
+      flyingCard.style.height = '127px';
       flyingCard.style.margin = '0';
       flyingCard.style.zIndex = '9999';
       flyingCard.style.pointerEvents = 'none';
+      flyingCard.innerHTML = '<div class="card-logo">UNO</div>';
       document.body.appendChild(flyingCard);
       
-      // Animate to target
-      flyingCard.style.transition = 'all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      flyingCard.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
       
       await sleep(10);
       
-      flyingCard.style.left = targetRect.left + targetRect.width / 2 - 40 + 'px';
-      flyingCard.style.top = targetRect.top + targetRect.height / 2 - 60 + 'px';
+      flyingCard.style.left = targetRect.left + targetRect.width / 2 - 42 + 'px';
+      flyingCard.style.top = targetRect.top + targetRect.height / 2 - 63 + 'px';
       flyingCard.style.transform = 'rotate(-180deg) scale(0.8)';
       
       await sleep(200);
       
       playSound('draw');
       
-      await sleep(150);
+      await sleep(100);
       
-      // Remove flying card
       flyingCard.remove();
     }
 
@@ -1972,6 +1949,7 @@
       
       if (isBack) {
         el.className = 'uno-card card-back';
+        el.innerHTML = '<div class="card-logo">UNO</div>';
         return el;
       }
 
@@ -1980,10 +1958,10 @@
       
       if (card.v === 'S') {
         cardClass += ' skip';
-        displayValue = '⊘';
+        displayValue = '';
       } else if (card.v === 'R') {
         cardClass += ' reverse';
-        displayValue = '⟲';
+        displayValue = '';
       } else if (card.v === '+2') {
         cardClass += ' draw-two';
         displayValue = '+2';
@@ -1999,24 +1977,20 @@
       
       let content = '';
       if (card.v === 'S') {
-        content = '<span class="card-value">⊘</span>';
+        content = '<span class="card-value"></span>';
       } else if (card.v === 'R') {
         content = '<div class="card-inner"><span class="arrow">→</span><span class="arrow">→</span></div>';
       } else if (card.v === '+2') {
-        content = `<span class="card-value">+2</span><div class="plus-cards"><div class="mini-card" style="color: ${getColorVar(card.c)}">+2</div></div>`;
+        content = '<span class="card-value">+2</span><div class="plus-cards"><div class="mini-card" style="color: ' + getColorVar(card.c) + '">+2</div></div>';
       } else if (card.v === 'W') {
         content = '<span class="card-value">WILD</span>';
       } else if (card.v === '+4') {
         content = '<span class="card-value">+4</span><span class="stack-indicator">WILD</span>';
       } else {
-        content = `<span class="card-value">${card.v}</span>`;
+        content = '<span class="card-value">' + card.v + '</span>';
       }
       
-      el.innerHTML = `
-        <span class="card-corner top">${displayValue}</span>
-        ${content}
-        <span class="card-corner bottom">${displayValue}</span>
-      `;
+      el.innerHTML = '<span class="card-corner top">' + displayValue + '</span>' + content + '<span class="card-corner bottom">' + displayValue + '</span>';
       
       return el;
     }
@@ -2035,7 +2009,6 @@
     // --- UI RENDERING ---
     // ==========================
     function updateUI() {
-      // Discard pile
       const discardPile = document.getElementById('discard-pile');
       const topCard = state.discard[state.discard.length - 1];
       if (topCard) {
@@ -2045,20 +2018,16 @@
         discardPile.appendChild(cardEl);
       }
       
-      // Color indicator
       const colorIndicator = document.getElementById('color-indicator');
       colorIndicator.className = 'color-indicator ' + state.activeColor;
       
-      // Deck count
       document.getElementById('deck-count').textContent = state.deck.length;
       
-      // Direction indicator
       const directionArrow = document.getElementById('direction-arrow');
       if (directionArrow) {
         directionArrow.className = 'direction-arrow ' + (state.direction === 1 ? 'clockwise' : 'counter-clockwise');
       }
       
-      // UNO button
       const unoBtn = document.getElementById('uno-btn');
       const currentPlayer = state.players[state.turn];
       if (state.turn === 0 && currentPlayer && currentPlayer.hand.length === 2 && state.active && !state.saidUno.has(0)) {
@@ -2067,13 +2036,10 @@
         unoBtn.classList.remove('active');
       }
       
-      // Stack counter
       updateStackCounter();
       
-      // Hand count
       document.getElementById('hand-count').textContent = state.players[0]?.hand.length || 0;
       
-      // Turn indicator
       updateTurnIndicator();
     }
 
@@ -2127,7 +2093,6 @@
         let isStackCard = false;
         let isJumpIn = false;
         
-        // Jump-in check
         if (gameSettings.jumpIn && !isMyTurn && state.active) {
           const topCard = state.discard[state.discard.length - 1];
           if (topCard && card.c === topCard.c && card.v === topCard.v) {
@@ -2136,7 +2101,6 @@
           }
         }
         
-        // Normal turn check
         if (isMyTurn && state.active) {
           if (state.drawStack > 0 && gameSettings.stacking) {
             if (canStackCard(card)) {
@@ -2152,7 +2116,7 @@
           el.classList.add('playable');
           if (isStackCard) el.classList.add('stackable');
           if (isJumpIn) {
-            el.style.boxShadow = '0 0 30px rgba(157, 78, 221, 0.8), 0 0 60px rgba(157, 78, 221, 0.5)';
+            el.style.boxShadow = '0 0 30px rgba(124, 58, 237, 0.8), 0 0 60px rgba(124, 58, 237, 0.5)';
           }
         }
         
@@ -2178,20 +2142,18 @@
 
     function renderGameTable() {
       const gameTable = document.getElementById('game-table');
-      // Clear only player zones
       gameTable.querySelectorAll('.player-zone').forEach(z => z.remove());
       
       const playerCount = state.players.length;
       const positions = getPlayerPositions(playerCount);
       
-      // Find partner index for team mode
       let partnerIdx = -1;
       if (gameMode === '2v2' && state.teams[0] !== undefined) {
         partnerIdx = state.teams.findIndex((t, i) => t === state.teams[0] && i !== 0);
       }
       
       state.players.forEach((player, idx) => {
-        if (idx === 0) return; // Main player rendered separately
+        if (idx === 0) return;
         
         const zone = document.createElement('div');
         zone.className = 'player-zone ' + positions[idx];
@@ -2199,61 +2161,53 @@
         const info = document.createElement('div');
         info.className = 'player-info';
         
-        // Active turn indicator
         if (state.turn === idx) info.classList.add('active');
-        
-        // Thinking indicator
-        if (state.turn === idx && player.isBot && state.active) {
-          info.classList.add('thinking');
-        }
-        
-        // Blocked state
+        if (state.turn === idx && player.isBot && state.active) info.classList.add('thinking');
         if (state.blockedPlayer === idx) info.classList.add('blocked');
         
-        // Must draw state
         if (state.mustDrawPlayer === idx) {
           info.classList.add('must-draw');
-          info.setAttribute('data-draw-count', '+' + state.drawStack);
+          const badge = document.createElement('div');
+          badge.className = 'draw-badge';
+          badge.textContent = '+' + state.drawStack;
+          info.appendChild(badge);
         }
         
-        // Catchable for UNO
         if (state.vulnerablePlayer === idx && state.turn === 0) {
           info.classList.add('catchable');
           info.onclick = () => catchUno(idx);
         }
         
-        // Challenge indicator
-        if (state.challengePending && state.lastPlayedBy === idx && state.turn === 0) {
-          info.classList.add('challengeable');
-        }
-        
-        // Team colors
         if (gameMode === '2v2' && state.teams[idx] !== undefined) {
           info.style.borderColor = TEAM_COLORS[state.teams[idx]];
         }
         
-        info.innerHTML = `
-          <div class="player-avatar" style="background: ${getPlayerColor(idx)}">${player.avatar}</div>
-          <div>
-            <div class="font-bold text-white">${player.name}</div>
-            <div class="card-count-badge">${player.hand.length}</div>
-          </div>
-        `;
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'player-avatar';
+        avatarDiv.style.background = getPlayerColor(idx);
+        avatarDiv.innerHTML = player.avatar;
         
+        const nameDiv = document.createElement('div');
+        nameDiv.innerHTML = '<div class="font-bold text-white">' + player.name + '</div><div class="card-count-badge">' + player.hand.length + '</div>';
+        
+        info.appendChild(avatarDiv);
+        info.appendChild(nameDiv);
         zone.appendChild(info);
         
-        // Cards display
         const cardsDiv = document.createElement('div');
         
         if (partnerIdx === idx && gameMode === '2v2') {
-          // Show partner cards
           cardsDiv.className = 'partner-cards';
+          cardsDiv.style.display = 'flex';
+          cardsDiv.style.justifyContent = 'center';
           player.hand.forEach(card => {
             const cardEl = renderCard(card);
+            cardEl.style.transform = 'scale(0.5)';
+            cardEl.style.margin = '0 -20px';
+            cardEl.style.cursor = 'default';
             cardsDiv.appendChild(cardEl);
           });
         } else {
-          // Show card backs
           cardsDiv.className = 'bot-cards ' + (positions[idx] === 'left' || positions[idx] === 'right' ? 'vertical' : 'horizontal');
           const displayCount = Math.min(player.hand.length, 7);
           for (let i = 0; i < displayCount; i++) {
@@ -2265,7 +2219,6 @@
         gameTable.appendChild(zone);
       });
       
-      // Main player zone
       const mainZone = document.createElement('div');
       mainZone.className = 'player-zone bottom';
       
@@ -2276,19 +2229,24 @@
       if (state.vulnerablePlayer === 0) mainInfo.classList.add('catchable');
       if (state.mustDrawPlayer === 0) {
         mainInfo.classList.add('must-draw');
-        mainInfo.setAttribute('data-draw-count', '+' + state.drawStack);
+        const badge = document.createElement('div');
+        badge.className = 'draw-badge';
+        badge.textContent = '+' + state.drawStack;
+        mainInfo.appendChild(badge);
       }
       if (gameMode === '2v2') mainInfo.style.borderColor = TEAM_COLORS[state.teams[0]];
       
-      mainInfo.innerHTML = `
-        <div class="player-avatar" style="background: ${getPlayerColor(0)}">${state.players[0].avatar}</div>
-        <div>
-          <div class="font-bold text-white">${state.players[0].name}</div>
-          <div class="card-count-badge">${state.players[0].hand.length}</div>
-        </div>
-      `;
+      const mainAvatar = document.createElement('div');
+      mainAvatar.className = 'player-avatar';
+      mainAvatar.style.background = getPlayerColor(0);
+      mainAvatar.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
       
-      // Timer
+      const mainNameDiv = document.createElement('div');
+      mainNameDiv.innerHTML = '<div class="font-bold text-white">' + state.players[0].name + '</div><div class="card-count-badge">' + state.players[0].hand.length + '</div>';
+      
+      mainInfo.appendChild(mainAvatar);
+      mainInfo.appendChild(mainNameDiv);
+      
       if (state.turn === 0 && state.active && gameSettings.timer) {
         const timerDiv = document.createElement('div');
         timerDiv.className = 'timer-ring';
@@ -2297,15 +2255,7 @@
         const circumference = 2 * Math.PI * 16;
         const offset = circumference - (state.timer / TURN_TIME) * circumference;
         
-        timerDiv.innerHTML = `
-          <svg width="40" height="40">
-            <circle class="bg" cx="20" cy="20" r="16"></circle>
-            <circle class="progress" cx="20" cy="20" r="16" 
-                    stroke-dasharray="${circumference}" 
-                    stroke-dashoffset="${offset}"></circle>
-          </svg>
-          <div class="timer-text">${state.timer}</div>
-        `;
+        timerDiv.innerHTML = '<svg width="44" height="44"><circle class="bg" cx="22" cy="22" r="16"></circle><circle class="progress" cx="22" cy="22" r="16" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + offset + '"></circle></svg><div class="timer-text">' + state.timer + '</div>';
         
         if (state.timer <= 3) timerDiv.classList.add('danger');
         else if (state.timer <= 5) timerDiv.classList.add('warning');
@@ -2445,7 +2395,7 @@
           renderGameTable();
         }
         
-        await sleep(80);
+        await sleep(60);
       }
     }
 
@@ -2453,7 +2403,6 @@
       const player = state.players[playerIndex];
       const card = player.hand.splice(cardIndex, 1)[0];
       
-      // Animate card to discard if element provided
       if (cardElement) {
         await animateCardToDiscard(playerIndex, cardElement);
       }
@@ -2464,7 +2413,6 @@
       state.mustDrawPlayer = null;
       state.lastPlayedBy = playerIndex;
       
-      // Handle stacking
       if (gameSettings.stacking) {
         if (card.v === '+2') {
           state.drawStack += 2;
@@ -2478,9 +2426,7 @@
         }
       }
       
-      // Check win
       if (player.hand.length === 0) {
-        // Check if player forgot to say UNO
         if (!state.saidUno.has(playerIndex)) {
           const penaltyCards = drawCards(4);
           player.hand.push(...penaltyCards);
@@ -2496,17 +2442,14 @@
         return;
       }
       
-      // Set vulnerable if has 1 card
       if (player.hand.length === 1) {
         state.vulnerablePlayer = playerIndex;
-        // Auto UNO for bots
         if (playerIndex !== 0 && player.isBot) {
           state.saidUno.add(playerIndex);
           state.vulnerablePlayer = null;
         }
       }
       
-      // Handle wild
       if (card.c === 'black') {
         if (playerIndex === 0) {
           state.pendingWild = card;
@@ -2528,7 +2471,6 @@
       const nextIdx = getNextPlayerIndex();
       const nextPlayer = state.players[nextIdx];
       
-      // Only apply skip effects if not stacking
       if (state.drawStack === 0 || !gameSettings.stacking) {
         if (card.v === 'S') {
           state.blockedPlayer = nextIdx;
@@ -2554,7 +2496,6 @@
         }
       }
       
-      // Check if next player must draw stack
       if (state.drawStack > 0 && gameSettings.stacking) {
         const canStack = nextPlayer.hand.some(c => canStackCard(c));
         
@@ -2583,7 +2524,6 @@
 
     function advanceTurn() {
       state.turn = getNextPlayerIndex();
-      state.challengePending = false;
       
       updateUI();
       renderHand();
@@ -2629,41 +2569,6 @@
       renderHand();
     }
 
-    async function handleChallenge(challenged) {
-      document.getElementById('challenge-modal').classList.remove('active');
-      
-      if (challenged) {
-        const lastPlayerIndex = state.lastPlayedBy;
-        const lastPlayer = state.players[lastPlayerIndex];
-        
-        const hadPlayableCard = lastPlayer.hand.some(c =>
-          c.c === state.activeColor && c.c !== 'black'
-        );
-        
-        if (hadPlayableCard) {
-          await drawCardsWithAnimation(lastPlayerIndex, 4);
-          showGameMessage('Challenge successful! They draw 4!');
-          playSound('challenge');
-        } else {
-          await drawCardsWithAnimation(0, 6);
-          showGameMessage('Challenge failed! You draw 6!');
-        }
-      } else {
-        if (state.drawStack > 0) {
-          await drawCardsWithAnimation(0, state.drawStack);
-          showGameMessage('You drew ' + state.drawStack + ' cards!');
-          state.drawStack = 0;
-          state.stackType = null;
-        }
-      }
-      
-      state.challengePending = false;
-      renderHand();
-      renderGameTable();
-      updateUI();
-      advanceTurn();
-    }
-
     // ==========================
     // --- BOT AI ---
     // ==========================
@@ -2672,12 +2577,10 @@
       
       const player = state.players[state.turn];
       
-      // Bot can catch player's UNO
       if (state.vulnerablePlayer === 0 && Math.random() > 0.5) {
         await catchUno(0);
       }
       
-      // Bot handles stack
       if (state.drawStack > 0 && gameSettings.stacking) {
         const stackCardIdx = player.hand.findIndex(c => canStackCard(c));
         if (stackCardIdx !== -1) {
@@ -2820,27 +2723,30 @@
       const slotsContainer = document.getElementById('player-slots');
       slotsContainer.innerHTML = '';
       
+      const userAvatar = '<svg viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
+      const botAvatar = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
+      
       if (gameMode === 'solo') {
         lobbyTitle.textContent = 'Solo Mode - 1 vs 3';
         slotsContainer.innerHTML = `
           <div class="player-slot occupied">
-            <div class="slot-avatar">😊</div>
+            <div class="slot-avatar" style="border-color: var(--uno-green);">${userAvatar}</div>
             <div class="font-semibold text-white">You</div>
           </div>
-          <div class="player-slot"><div class="slot-avatar">❓</div><div class="font-semibold text-gray-500">Bot 1</div></div>
-          <div class="player-slot"><div class="slot-avatar">❓</div><div class="font-semibold text-gray-500">Bot 2</div></div>
-          <div class="player-slot"><div class="slot-avatar">❓</div><div class="font-semibold text-gray-500">Bot 3</div></div>
+          <div class="player-slot"><div class="slot-avatar">${botAvatar}</div><div class="font-semibold text-gray-500">Bot 1</div></div>
+          <div class="player-slot"><div class="slot-avatar">${botAvatar}</div><div class="font-semibold text-gray-500">Bot 2</div></div>
+          <div class="player-slot"><div class="slot-avatar">${botAvatar}</div><div class="font-semibold text-gray-500">Bot 3</div></div>
         `;
       } else {
         lobbyTitle.textContent = '2v2 Team Mode - See Partner Cards!';
         slotsContainer.innerHTML = `
           <div class="player-slot occupied">
-            <div class="slot-avatar" style="border: 3px solid ${TEAM_COLORS[0]}">😊</div>
+            <div class="slot-avatar" style="border-color: ${TEAM_COLORS[0]};">${userAvatar}</div>
             <div class="font-semibold text-white">You</div>
           </div>
-          <div class="player-slot"><div class="slot-avatar">❓</div><div class="font-semibold text-gray-500">Partner</div></div>
-          <div class="player-slot enemy"><div class="slot-avatar">❓</div><div class="font-semibold text-gray-500">Enemy 1</div></div>
-          <div class="player-slot enemy"><div class="slot-avatar">❓</div><div class="font-semibold text-gray-500">Enemy 2</div></div>
+          <div class="player-slot"><div class="slot-avatar" style="border-color: ${TEAM_COLORS[0]};">${botAvatar}</div><div class="font-semibold text-gray-500">Partner</div></div>
+          <div class="player-slot enemy"><div class="slot-avatar">${botAvatar}</div><div class="font-semibold text-gray-500">Enemy 1</div></div>
+          <div class="player-slot enemy"><div class="slot-avatar">${botAvatar}</div><div class="font-semibold text-gray-500">Enemy 2</div></div>
         `;
       }
     }
@@ -2850,40 +2756,8 @@
     }
 
     async function startMatching() {
-      const gachaOverlay = document.getElementById('gacha-overlay');
-      const gachaResult = document.getElementById('gacha-result');
-      
-      gachaOverlay.classList.add('active');
-      gachaResult.innerHTML = '';
-      
-      await sleep(2000);
-      
-      const opponents = [];
-      for (let i = 0; i < 3; i++) opponents.push(getRandomBot());
-      
-      let resultHTML = '<div class="text-xl font-bold text-white mb-4">Match Found!</div><div class="flex gap-4 flex-wrap justify-center">';
-      
-      opponents.forEach((bot, i) => {
-        const isPartner = gameMode === '2v2' && i === 0;
-        const isEnemy = gameMode === '2v2' && i > 0;
-        resultHTML += `
-          <div class="text-center">
-            <div class="result-avatar" style="background: ${getPlayerColor(i+1)}">${bot.avatar}</div>
-            <div class="font-bold text-white">${bot.name}</div>
-            <div class="text-xs ${isPartner ? 'text-green-400' : isEnemy ? 'text-red-400' : 'text-gray-400'}">
-              ${isPartner ? 'Partner' : isEnemy ? 'Enemy' : 'Opponent'}
-            </div>
-          </div>
-        `;
-      });
-      
-      resultHTML += '</div>';
-      gachaResult.innerHTML = resultHTML;
-      
-      await sleep(2000);
-      
-      gachaOverlay.classList.remove('active');
-      initGame(opponents);
+      showScreen('game-app');
+      initGame([]);
     }
 
     // ==========================
@@ -2926,12 +2800,24 @@
       
       const playerName = document.getElementById('player-name-input').value || 'Player';
       
+      // Generate random bot opponents
+      const bots = [];
+      for (let i = 0; i < 3; i++) {
+        const bot = getRandomBot();
+        bots.push({
+          name: bot.name,
+          avatar: bot.avatar,
+          hand: [],
+          isBot: true
+        });
+      }
+      
       state = {
         deck: createDeck(),
         discard: [],
         players: [{
           name: playerName,
-          avatar: '😊',
+          avatar: '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>',
           hand: [],
           isBot: false
         }],
@@ -2949,23 +2835,14 @@
         timerInterval: null,
         blockedPlayer: null,
         mustDrawPlayer: null,
-        lastPlayedBy: null,
-        challengePending: false
+        lastPlayedBy: null
       };
       
-      opponents.forEach((bot, i) => {
-        state.players.push({
-          name: bot.name,
-          avatar: bot.avatar,
-          hand: [],
-          isBot: true
-        });
+      bots.forEach((bot, i) => {
+        state.players.push(bot);
         if (gameMode === '2v2') state.teams.push(i === 0 ? 0 : 1);
       });
       
-      showScreen('game-app');
-      
-      // Deal cards with animation
       const handContainer = document.getElementById('player-hand');
       
       for (let i = 0; i < 7; i++) {
@@ -2980,11 +2857,10 @@
             renderGameTable();
           }
           
-          await sleep(40);
+          await sleep(30);
         }
       }
       
-      // Start card
       let startCard = drawCards()[0];
       while (startCard.c === 'black' || SPECIAL_VALUES.includes(startCard.v)) {
         state.deck.unshift(startCard);
@@ -3008,14 +2884,16 @@
     // ==========================
     function createConfetti() {
       const container = document.getElementById('confetti-container');
-      const colors = ['#e63946', '#4361ee', '#06d6a0', '#ffd60a', '#9d4edd'];
+      const colors = ['#dc2626', '#2563eb', '#059669', '#eab308', '#7c3aed'];
       
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 80; i++) {
         const confetti = document.createElement('div');
         confetti.className = 'confetti';
         confetti.style.left = Math.random() * 100 + '%';
         confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.width = (8 + Math.random() * 8) + 'px';
+        confetti.style.height = confetti.style.width;
         confetti.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
         container.appendChild(confetti);
       }
@@ -3043,11 +2921,15 @@
       
       const isWin = winnerIndex === 0 || (gameMode === '2v2' && state.teams[winnerIndex] === state.teams[0]);
       
+      const resultEmoji = document.getElementById('result-emoji');
+      
       if (isWin) {
         createConfetti();
         playSound('win');
+        resultEmoji.innerHTML = '<svg width="80" height="80" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
       } else {
         playSound('lose');
+        resultEmoji.innerHTML = '<svg width="80" height="80" viewBox="0 0 24 24" fill="#dc2626"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>';
       }
       
       const results = state.players.map((p, idx) => ({
@@ -3065,23 +2947,13 @@
         results.unshift(winnerData);
       }
       
-      document.getElementById('result-emoji').textContent = isWin ? '🎉' : '😢';
       document.getElementById('winner-text').textContent = isWin ? 'YOU WIN!' : 'YOU LOSE';
       
       const resultsContainer = document.getElementById('results-container');
-      resultsContainer.innerHTML = results.map((r, idx) => `
-        <div class="results-player ${r.isWinner ? 'winner' : ''}">
-          <div class="results-rank">${idx + 1}</div>
-          <div class="player-avatar" style="background: ${getPlayerColor(state.players.findIndex(p => p.name === r.name))}; width: 40px; height: 40px; font-size: 1.2rem;">${r.avatar}</div>
-          <div>
-            <div class="font-bold text-white">${r.name}</div>
-            <div class="results-cards">
-              ${r.hand.map(c => renderCard(c).outerHTML).join('')}
-            </div>
-          </div>
-          <div class="results-points">${r.points} pts</div>
-        </div>
-      `).join('');
+      resultsContainer.innerHTML = results.map((r, idx) => {
+        const playerIdx = state.players.findIndex(p => p.name === r.name);
+        return '<div class="results-player ' + (r.isWinner ? 'winner' : '') + '"><div class="results-rank">' + (idx + 1) + '</div><div class="player-avatar" style="background: ' + getPlayerColor(playerIdx) + '; width: 44px; height: 44px;">' + r.avatar + '</div><div><div class="font-bold text-white">' + r.name + '</div><div class="results-cards">' + r.hand.map(c => renderCard(c).outerHTML).join('') + '</div></div><div class="results-points">' + r.points + ' pts</div></div>';
+      }).join('');
       
       document.getElementById('game-over').classList.add('active');
     }
@@ -3104,8 +2976,7 @@
       
       document.getElementById('btn-lobby').addEventListener('click', () => {
         document.getElementById('game-over').classList.remove('active');
-        showScreen('lobby-screen');
-        setupLobby();
+        showScreen('menu-screen');
       });
       
       document.getElementById('draw-pile').addEventListener('click', async () => {
@@ -3186,7 +3057,6 @@
         if (e.key === 'Escape') {
           document.getElementById('settings-modal').classList.remove('active');
           document.getElementById('color-picker').classList.remove('active');
-          document.getElementById('challenge-modal').classList.remove('active');
         }
       });
     });
