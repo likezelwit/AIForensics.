@@ -50,7 +50,6 @@
       transform-style: preserve-3d;
     }
 
-    /* Card Inner Design (Oval) */
     .uno-card::before {
       content: '';
       position: absolute;
@@ -73,13 +72,11 @@
       line-height: 1;
     }
 
-    /* Colors */
     .uno-card.red { background: var(--uno-red); }
     .uno-card.blue { background: var(--uno-blue); }
     .uno-card.green { background: var(--uno-green); }
     .uno-card.yellow { background: var(--uno-yellow); }
     
-    /* Wild Card Styling */
     .uno-card.wild-card {
       background: #111;
       border-color: #333;
@@ -90,7 +87,6 @@
     }
     .uno-card.wild-card .card-value { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
 
-    /* Card Back */
     .card-back {
       background: #1a1a1a;
       border: 4px solid #333;
@@ -108,7 +104,6 @@
     }
     .card-back::before { display: none; }
 
-    /* Interactions */
     .uno-card:not(.disabled):hover {
       transform: translateY(-40px) scale(1.15) rotateX(10deg);
       z-index: 100;
@@ -154,62 +149,25 @@
       z-index: 0;
     }
 
-    .top-area {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding-top: 20px;
-      z-index: 10;
-    }
-
-    .center-area {
-      height: 250px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      z-index: 10;
-    }
-
-    .bottom-area {
-      background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(10px);
-      padding: 20px 10px 30px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      z-index: 20;
-    }
+    .top-area { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding-top: 20px; z-index: 10; }
+    .center-area { height: 250px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; }
+    .bottom-area { background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); padding: 20px 10px 30px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 20; }
 
     /* --- UNO Button --- */
-    .uno-btn-container {
-      position: absolute;
-      right: 20px;
-      bottom: 100px;
-      z-index: 50;
-    }
+    .uno-btn-container { position: absolute; right: 20px; bottom: 100px; z-index: 50; }
 
     .big-uno-btn {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
+      width: 90px; height: 90px; border-radius: 50%;
       background: linear-gradient(135deg, #ff3366 0%, #ff0000 100%);
       border: 4px solid white;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 2.5rem;
-      color: white;
+      font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: white;
       cursor: pointer;
       box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4);
       transition: all 0.2s;
-      opacity: 0.3;
-      pointer-events: none;
+      opacity: 0.3; pointer-events: none;
     }
 
-    .big-uno-btn.active {
-      opacity: 1;
-      pointer-events: all;
-      animation: shake-btn 0.5s infinite;
-    }
-
+    .big-uno-btn.active { opacity: 1; pointer-events: all; animation: shake-btn 0.5s infinite; }
     .big-uno-btn:active { transform: scale(0.9); }
 
     @keyframes shake-btn {
@@ -219,119 +177,36 @@
       100% { transform: rotate(0deg); }
     }
 
-    /* --- Hand Container --- */
-    .hand-wrapper {
-      display: flex;
-      justify-content: center;
-    }
-
-    .hand-container {
-      display: flex;
-      justify-content: center;
-      padding: 10px;
-    }
-
-    .hand-container .uno-card {
-      margin: 0 -20px;
-    }
-
-    .bot-hand .card-back {
-      transform: scale(0.6);
-      margin: 0 -30px !important;
-    }
+    .hand-wrapper { display: flex; justify-content: center; }
+    .hand-container { display: flex; justify-content: center; padding: 10px; }
+    .hand-container .uno-card { margin: 0 -20px; }
+    .bot-hand .card-back { transform: scale(0.6); margin: 0 -30px !important; }
 
     /* --- Animations --- */
-    @keyframes deal-from-deck {
-      0% { transform: translate(0, -300px) rotate(180deg) scale(0.5); opacity: 0; }
-      100% { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
-    }
-
-    @keyframes card-played {
-      0% { transform: translateY(100px) scale(1.2); }
-      100% { transform: translateY(0) scale(1); }
-    }
-
+    @keyframes deal-from-deck { 0% { transform: translate(0, -300px) rotate(180deg) scale(0.5); opacity: 0; } 100% { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; } }
+    @keyframes card-played { 0% { transform: translateY(100px) scale(1.2); } 100% { transform: translateY(0) scale(1); } }
     .deal-anim { animation: deal-from-deck 0.4s ease-out backwards; }
     .play-anim { animation: card-played 0.3s ease-out; }
 
     /* --- Modals --- */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      backdrop-filter: blur(8px);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .modal-overlay.active { opacity: 1; pointer-events: all; }
-
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px;
-      padding: 2rem;
-    }
-
-    .color-btn {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      border: 4px solid white;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
+    .glass-panel { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; }
+    
+    .color-btn { width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
     .color-btn:hover { transform: scale(1.2); box-shadow: 0 0 20px currentColor; }
     .color-btn.red { background: var(--uno-red); color: var(--uno-red); }
     .color-btn.blue { background: var(--uno-blue); color: var(--uno-blue); }
     .color-btn.green { background: var(--uno-green); color: var(--uno-green); }
     .color-btn.yellow { background: var(--uno-yellow); color: var(--uno-yellow); }
 
-    /* --- Piles --- */
-    .deck-pile {
-      position: relative;
-      width: var(--card-width);
-      height: var(--card-height);
-      margin-right: 40px;
-    }
-    
-    .deck-pile .card-back {
-      position: absolute;
-      top: 0;
-      left: 0;
-      cursor: pointer;
-    }
-    
+    .deck-pile { position: relative; width: var(--card-width); height: var(--card-height); margin-right: 40px; }
+    .deck-pile .card-back { position: absolute; top: 0; left: 0; cursor: pointer; }
     .deck-pile .card-back:nth-child(1) { transform: translate(2px, 2px); }
     .deck-pile .card-back:nth-child(2) { transform: translate(4px, 4px); }
     
-    .discard-pile {
-      width: var(--card-width);
-      height: var(--card-height);
-      background: rgba(0,0,0,0.2);
-      border-radius: 12px;
-      border: 2px dashed rgba(255,255,255,0.2);
-    }
-
-    .turn-indicator {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--accent);
-      padding: 8px 24px;
-      border-radius: 30px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-
+    .discard-pile { width: var(--card-width); height: var(--card-height); background: rgba(0,0,0,0.2); border-radius: 12px; border: 2px dashed rgba(255,255,255,0.2); }
+    .turn-indicator { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: var(--accent); padding: 8px 24px; border-radius: 30px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
   </style>
 </head>
 <body>
@@ -369,32 +244,19 @@
 
   <!-- GAME SCREEN -->
   <div id="game-app" class="hidden">
-    
-    <!-- Turn Indicator -->
     <div id="turn-indicator" class="turn-indicator">Waiting...</div>
+    <div id="bot-area" class="top-area"></div>
 
-    <!-- Bot Area Top -->
-    <div id="bot-area" class="top-area">
-      <!-- Injected by JS -->
-    </div>
-
-    <!-- Center Piles -->
     <div class="center-area">
       <div class="deck-pile" id="draw-pile" title="Draw Card (D)">
         <div class="uno-card card-back"></div>
         <div class="uno-card card-back"></div>
         <div class="uno-card card-back"></div>
       </div>
-
-      <div class="discard-pile" id="discard-pile">
-        <!-- Current Card Here -->
-      </div>
-      
-      <!-- Current Color Indicator -->
+      <div class="discard-pile" id="discard-pile"></div>
       <div id="color-orb" class="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full border-4 border-white/50 shadow-lg transition-colors duration-300"></div>
     </div>
 
-    <!-- Player Area Bottom -->
     <div class="bottom-area">
       <div class="flex justify-between items-center mb-2 px-6 max-w-5xl mx-auto w-full">
         <div class="flex items-center gap-2">
@@ -403,13 +265,10 @@
         </div>
       </div>
       <div class="hand-wrapper overflow-x-auto pb-4">
-        <div id="player-hand" class="hand-container">
-          <!-- Player Hand Injected by JS -->
-        </div>
+        <div id="player-hand" class="hand-container"></div>
       </div>
     </div>
 
-    <!-- Big UNO Button -->
     <div class="uno-btn-container">
       <button id="uno-btn" class="big-uno-btn" title="Say UNO (U)">UNO</button>
     </div>
@@ -441,7 +300,16 @@
   </div>
 
   <script>
-    // --- Audio System (Synth) ---
+    // ==========================
+    // --- CONFIG & CONSTANTS ---
+    // ==========================
+    const COLORS = ['red', 'blue', 'green', 'yellow'];
+    const SPECIAL_VALUES = ['S', 'R', '+2']; // Skip, Reverse, Draw Two
+    const WILD_VALUES = ['W', '+4']; // Wild, Wild Draw Four
+    
+    // ==========================
+    // --- AUDIO SYSTEM ---
+    // ==========================
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
@@ -451,118 +319,154 @@
       const g = audioCtx.createGain();
       osc.connect(g); g.connect(audioCtx.destination);
       const t = audioCtx.currentTime;
-      if (type === 'card') {
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(400, t); osc.frequency.exponentialRampToValueAtTime(200, t + 0.1);
-        g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-        osc.start(t); osc.stop(t + 0.1);
-      } else if (type === 'win') {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, t); osc.frequency.setValueAtTime(659.25, t + 0.15);
-        g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-        osc.start(t); osc.stop(t + 0.5);
-      } else if (type === 'lose') {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, t); osc.frequency.exponentialRampToValueAtTime(50, t + 0.5);
-        g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-        osc.start(t); osc.stop(t + 0.5);
-      } else if (type === 'draw') {
-          osc.type = 'sine'; osc.frequency.setValueAtTime(300, t);
-          g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-          osc.start(t); osc.stop(t + 0.05);
-      }
+      
+      // Simple sound synthesis based on type
+      const sounds = {
+        card: { type: 'triangle', freq: [400, 200], dur: 0.1, vol: 0.1 },
+        win: { type: 'sine', freq: [523.25, 659.25], dur: 0.5, vol: 0.1 },
+        lose: { type: 'sawtooth', freq: [200, 50], dur: 0.5, vol: 0.1 },
+        draw: { type: 'sine', freq: [300, 300], dur: 0.05, vol: 0.05 }
+      };
+      
+      const s = sounds[type];
+      if(!s) return;
+
+      osc.type = s.type;
+      osc.frequency.setValueAtTime(s.freq[0], t);
+      if(s.freq[0] !== s.freq[1]) osc.frequency.exponentialRampToValueAtTime(s.freq[1], t + s.dur);
+      
+      g.gain.setValueAtTime(s.vol, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + s.dur);
+      
+      osc.start(t);
+      osc.stop(t + s.dur);
     }
 
-    // --- Game Logic ---
-    const COLORS = ['red', 'blue', 'green', 'yellow'];
-    const VALS = ['0','1','2','3','4','5','6','7','8','9','S','R','+2'];
-    
+    // ==========================
+    // --- GAME STATE ---
+    // ==========================
     let state = {
-      deck: [], discard: [], players: [], turn: 0, dir: 1, color: 'red', 
-      isOver: false, active: false, saidUno: false, pendingWild: null, isDealing: false
+      deck: [], 
+      discard: [], 
+      players: [], 
+      turn: 0,          // Index of current player
+      dir: 1,           // 1 = Clockwise, -1 = Counter-Clockwise
+      activeColor: 'red',
+      isOver: false, 
+      active: false,    // Is game running?
+      saidUno: false,   // Did player press UNO button?
+      pendingWild: null // Stores card if waiting for color choice
     };
 
+    // DOM References
     const $ = id => document.getElementById(id);
-    const $lobby = $('lobby'), $game = $('game-app'), $hand = $('player-hand');
-    const $botArea = $('bot-area'), $discard = $('discard-pile'), $draw = $('draw-pile');
-    const $colorPicker = $('color-picker'), $gameOver = $('game-over');
-    const $unoBtn = $('uno-btn'), $turnInd = $('turn-indicator'), $colorOrb = $('color-orb');
+    const UI = {
+      lobby: $('lobby'), game: $('game-app'), hand: $('player-hand'),
+      botArea: $('bot-area'), discard: $('discard-pile'), draw: $('draw-pile'),
+      colorPicker: $('color-picker'), gameOver: $('game-over'),
+      unoBtn: $('uno-btn'), turnInd: $('turn-indicator'), colorOrb: $('color-orb'),
+      botCount: $('bot-count'), playerName: $('player-name')
+    };
 
-    // Deck Init
+    // ==========================
+    // --- DECK & UTILITIES ---
+    // ==========================
     function createDeck() {
       let d = [];
+      // Number cards and action cards per color
       COLORS.forEach(c => {
-        d.push({ c, v: '0' });
-        for (let i=1; i<=9; i++) { d.push({c, v: i.toString()}); d.push({c, v: i.toString()}); }
-        ['S','R','+2'].forEach(v => { d.push({c, v}); d.push({c, v}); });
+        d.push({ c, v: '0' }); // One 0
+        for (let i=1; i<=9; i++) { // Two of each 1-9
+            d.push({c, v: i.toString()}); 
+            d.push({c, v: i.toString()}); 
+        }
+        SPECIAL_VALUES.forEach(v => { d.push({c, v}); d.push({c, v}); }); // Two of each special
       });
-      for(let i=0; i<4; i++) { d.push({c: 'black', v: 'W'}); d.push({c: 'black', v: '+4'}); }
+      // Wild cards
+      for(let i=0; i<4; i++) { 
+          d.push({c: 'black', v: 'W'}); 
+          d.push({c: 'black', v: '+4'}); 
+      }
       return shuffle(d);
     }
-    function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
-    // Rendering
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ==========================
+    // --- RENDERING ---
+    // ==========================
     function renderCard(card, isBack=false) {
       const el = document.createElement('div');
       el.className = `uno-card ${isBack ? 'card-back' : card.c} ${card.c === 'black' ? 'wild-card' : ''}`;
       
       let sym = card.v;
-      if (sym === 'S') sym = 'Ø'; // Skip
-      if (sym === 'R') sym = '⟲'; // Reverse
+      if (sym === 'S') sym = 'Ø'; 
+      if (sym === 'R') sym = '⟲'; 
       
       if (!isBack) el.innerHTML = `<span class="card-value">${sym}</span>`;
       return el;
     }
 
     function updateUI() {
+      // Discard Pile
       const top = state.discard[state.discard.length - 1];
       if (top) {
-        $discard.innerHTML = '';
+        UI.discard.innerHTML = '';
         const cardEl = renderCard(top);
         cardEl.classList.add('play-anim');
-        $discard.appendChild(cardEl);
+        UI.discard.appendChild(cardEl);
       }
       
+      // Color Orb
       const cmap = { red: 'var(--uno-red)', blue: 'var(--uno-blue)', green: 'var(--uno-green)', yellow: 'var(--uno-yellow)' };
-      $colorOrb.style.background = cmap[state.color] || 'transparent';
+      UI.colorOrb.style.background = cmap[state.activeColor] || 'transparent';
 
-      $turnInd.innerText = state.turn === 0 ? "Your Turn" : `${state.players[state.turn].name}'s Turn`;
-      $turnInd.style.background = state.turn === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.2)';
+      // Turn Indicator
+      const currPlayer = state.players[state.turn];
+      UI.turnInd.innerText = state.turn === 0 ? "Your Turn" : `${currPlayer.name}'s Turn`;
+      UI.turnInd.style.background = state.turn === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.2)';
 
       // UNO Button Logic
-      if (state.turn === 0 && state.players[0].hand.length === 2 && !state.saidUno) {
-        $unoBtn.classList.add('active');
+      // Active if it's player's turn, they have 2 cards, and haven't said UNO yet
+      if (state.turn === 0 && state.players[0].hand.length === 2 && !state.saidUno && state.active) {
+        UI.unoBtn.classList.add('active');
       } else {
-        $unoBtn.classList.remove('active');
+        UI.unoBtn.classList.remove('active');
       }
       
       $('player-card-count').innerText = `${state.players[0].hand.length} cards`;
     }
 
     function renderHand() {
-      $hand.innerHTML = '';
+      UI.hand.innerHTML = '';
       const me = state.players[0];
       const isMyTurn = state.turn === 0;
 
       me.hand.forEach((card, idx) => {
         const el = renderCard(card);
+        // Animation logic could go here
         
-        // Only apply deal animation during the dealing phase
-        if (state.isDealing) {
-            el.style.animationDelay = `${idx * 0.05}s`;
-            el.classList.add('deal-anim');
-        }
-
-        const valid = isMyTurn && checkValid(card);
+        const valid = isMyTurn && checkValidPlay(card);
         if (valid) el.classList.add('playable');
         else el.classList.add('disabled');
 
         el.onclick = () => {
-          if (valid) playCard(0, idx);
+          if (valid) executePlayerTurn(idx);
         };
-        $hand.appendChild(el);
+        UI.hand.appendChild(el);
       });
     }
 
     function renderBots() {
-      $botArea.innerHTML = '';
+      UI.botArea.innerHTML = '';
       state.players.slice(1).forEach((p, i) => {
         const div = document.createElement('div');
         div.className = 'flex flex-col items-center';
@@ -574,6 +478,7 @@
         
         const handDiv = document.createElement('div');
         handDiv.className = 'bot-hand flex';
+        // Show placeholder cards
         p.hand.slice(0, 5).forEach(() => {
            handDiv.innerHTML += `<div class="uno-card card-back"></div>`;
         });
@@ -585,194 +490,240 @@
         div.appendChild(tag);
         div.appendChild(handDiv);
         div.appendChild(count);
-        $botArea.appendChild(div);
+        UI.botArea.appendChild(div);
       });
     }
 
-    // Logic
-    function checkValid(card) {
+    // ==========================
+    // --- GAME LOGIC ---
+    // ==========================
+    
+    // Check if a card can be played
+    function checkValidPlay(card) {
       const top = state.discard[state.discard.length - 1];
+      if (!top) return true;
+      
+      // Wild cards are always valid
       if (card.c === 'black') return true;
-      if (card.c === state.color) return true;
+      
+      // Match color or value
+      if (card.c === state.activeColor) return true;
       if (card.v === top.v) return true;
+      
       return false;
     }
 
-    function drawCard(count=1) {
+    // Draw cards from deck
+    function drawCards(count=1) {
       let drawn = [];
       for(let i=0; i<count; i++) {
+        // Reshuffle if deck empty
         if (state.deck.length === 0) {
-          const top = state.discard.pop();
-          state.deck = shuffle(state.discard);
-          state.discard = [top];
+            if(state.discard.length <= 1) break; // No cards to reshuffle
+            const topCard = state.discard.pop();
+            state.deck = shuffle(state.discard);
+            state.discard = [topCard];
         }
-        drawn.push(state.deck.pop());
+        if(state.deck.length > 0) drawn.push(state.deck.pop());
       }
       return drawn;
     }
 
+    // Handle playing a card
     function playCard(pIdx, cIdx) {
-      const card = state.players[pIdx].hand.splice(cIdx, 1)[0];
+      const player = state.players[pIdx];
+      const card = player.hand.splice(cIdx, 1)[0];
       state.discard.push(card);
       
       playSound('card');
-      
+
       // Check Win
-      if (state.players[pIdx].hand.length === 0) {
+      if (player.hand.length === 0) {
         setTimeout(() => endGame(pIdx), 500);
         updateUI();
         renderHand();
         return;
       }
 
-      // Check UNO Penalty for Player
-      if (pIdx === 0 && state.players[0].hand.length === 1 && !state.saidUno) {
+      // UNO Check (Player only)
+      if (pIdx === 0 && player.hand.length === 1 && !state.saidUno) {
          setTimeout(() => {
              alert("You forgot to say UNO! Draw 2 cards.");
-             state.players[0].hand.push(...drawCard(2));
+             player.hand.push(...drawCards(2));
              renderHand();
              updateUI();
          }, 300);
       }
       
-      // Bot says UNO automatically
-      if (pIdx !== 0 && state.players[pIdx].hand.length === 1) {
-          console.log(`${state.players[pIdx].name} says UNO!`);
+      // Bot Auto-UNO
+      if (pIdx !== 0 && player.hand.length === 1) {
+          console.log(`${player.name} says UNO!`);
       }
 
+      // Handle Wildcards
       if (card.c === 'black') {
         if (pIdx === 0) {
           state.pendingWild = card;
-          $colorPicker.classList.add('active');
+          UI.colorPicker.classList.add('active');
           updateUI();
-          return;
+          return; // Pause game flow until color chosen
         } else {
-          state.color = pickBotColor(state.players[pIdx].hand);
+          state.activeColor = chooseBotColor(player.hand);
         }
       } else {
-        state.color = card.c;
+        state.activeColor = card.c;
       }
 
-      applyEffect(card, pIdx);
-      nextTurn();
+      applyCardEffect(card, pIdx);
+      advanceTurn();
     }
 
-    function applyEffect(card, pIdx) {
-      if (card.v === 'S') {
-        state.turn = getNextIdx();
-      } 
-      else if (card.v === 'R') {
-        state.dir *= -1;
-        if (state.players.length === 2) state.turn = getNextIdx();
-      } 
-      else if (card.v === '+2') {
-        const victim = getNextIdx();
-        state.players[victim].hand.push(...drawCard(2));
-        state.turn = victim;
-      } 
-      else if (card.v === '+4') {
-        const victim = getNextIdx();
-        state.players[victim].hand.push(...drawCard(4));
-        state.turn = victim;
-      }
+    // Apply effects (Skip, Reverse, +2, +4)
+    function applyCardEffect(card, currentPIdx) {
+        switch(card.v) {
+            case 'S': // Skip
+                // Logic handled in advanceTurn, just visual/logic consistency
+                // We skip the NEXT player. 
+                // Implementation: Move turn index once, then advanceTurn moves it again.
+                state.turn = getNextPlayerIdx(); 
+                break;
+            case 'R': // Reverse
+                state.dir *= -1;
+                // In 2 player game, Reverse acts like Skip
+                if (state.players.length === 2) state.turn = getNextPlayerIdx();
+                break;
+            case '+2':
+                const victimIdx2 = getNextPlayerIdx();
+                state.players[victimIdx2].hand.push(...drawCards(2));
+                state.turn = victimIdx2; // Skip the victim
+                break;
+            case '+4':
+                const victimIdx4 = getNextPlayerIdx();
+                state.players[victimIdx4].hand.push(...drawCards(4));
+                state.turn = victimIdx4; // Skip the victim
+                break;
+        }
     }
 
-    function getNextIdx() {
+    function getNextPlayerIdx() {
       let next = state.turn + state.dir;
       if (next >= state.players.length) next = 0;
       if (next < 0) next = state.players.length - 1;
       return next;
     }
 
-    function nextTurn() {
-      state.turn = getNextIdx();
-      state.saidUno = false; 
+    function advanceTurn() {
+      state.turn = getNextPlayerIdx();
+      state.saidUno = false; // Reset UNO flag for the new player
+      
       updateUI();
       renderHand();
       renderBots();
       
+      // Check if bot needs to play
       if (state.players[state.turn].isBot) {
         setTimeout(botTurn, 1200);
       }
     }
 
-    // Bot AI
+    // ==========================
+    // --- BOT AI ---
+    // ==========================
     function botTurn() {
-      if (state.isOver) return;
+      if (state.isOver || !state.active) return;
+      
       const p = state.players[state.turn];
-      
-      let playable = p.hand.map((c, i) => ({c, i})).filter(o => checkValid(o.c));
-      
-      if (playable.length > 0) {
-        playable.sort((a, b) => {
-            // FIX: Added missing closing parenthesis at the end of this line
-            let score = (card) => (card.v === '+4' ? 10 : (card.v === '+2' ? 8 : (card.v === 'S' || card.v === 'R' ? 6 : (card.c !== 'black' ? 4 : 2))));
-            return score(b.c) - score(a.c);
-        });
-        
-        let choice = playable[0];
-        if (choice.c.v === '+4' && playable.length > 1 && Math.random() > 0.3) choice = playable[1]; 
-        
-        playCard(state.turn, choice.i);
+      let validMoves = [];
+
+      // Find valid moves
+      p.hand.forEach((card, index) => {
+          if(checkValidPlay(card)) validMoves.push({card, index});
+      });
+
+      if (validMoves.length > 0) {
+          // Simple Strategy: Prioritize +4, then +2, then Skip/Rev, then color match, then wild
+          validMoves.sort((a, b) => getCardPriority(b.card) - getCardPriority(a.card));
+          
+          // If best card is +4 but we have other options, maybe hold it (chance logic)
+          // Simplified: Just play best card
+          const choice = validMoves[0];
+          playCard(state.turn, choice.index);
       } else {
-        p.hand.push(...drawCard(1));
-        playSound('draw');
-        updateUI();
-        renderBots();
-        nextTurn();
+          // Must draw
+          const drawn = drawCards(1);
+          if(drawn.length > 0) p.hand.push(...drawn);
+          playSound('draw');
+          
+          // Check if drawn card is playable
+          const drawnCard = drawn[0];
+          if(drawnCard && checkValidPlay(drawnCard)) {
+              // Play it immediately
+              const idx = p.hand.length - 1;
+              setTimeout(() => playCard(state.turn, idx), 800);
+          } else {
+              advanceTurn();
+          }
       }
     }
 
-    function pickBotColor(hand) {
-      let counts = { red: 0, blue: 0, green: 0, yellow: 0 };
-      hand.forEach(c => { if (c.c !== 'black') counts[c.c]++; });
-      return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    function getCardPriority(card) {
+        if(card.v === '+4') return 100;
+        if(card.v === '+2') return 80;
+        if(card.v === 'S' || card.v === 'R') return 50;
+        if(card.c !== 'black') return 20; // Color cards
+        return 10; // Wild
     }
 
-    // Game Init
+    function chooseBotColor(hand) {
+        let counts = { red: 0, blue: 0, green: 0, yellow: 0 };
+        hand.forEach(c => { if (c.c !== 'black') counts[c.c]++; });
+        // Return color with most cards
+        return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    }
+
+    // ==========================
+    // --- INITIALIZATION ---
+    // ==========================
     async function startGame() {
       initAudio();
       
-      const botCountEl = $('bot-count');
-      const botCount = parseInt(botCountEl.innerText.trim(), 10) || 3; 
-      
-      const pNameEl = $('player-name');
-      const pName = pNameEl.value || 'Player';
+      const botCount = parseInt(UI.botCount.innerText.trim(), 10) || 3; 
+      const pName = UI.playerName.value || 'Player';
       
       state = {
         deck: createDeck(), discard: [], 
         players: [{name: pName, hand: [], isBot: false}],
-        turn: 0, dir: 1, isOver: false, active: true, saidUno: false, isDealing: true
+        turn: 0, dir: 1, isOver: false, active: true, saidUno: false, pendingWild: null
       };
       
       for(let i=0; i<botCount; i++) {
           state.players.push({name: `Bot ${i+1}`, hand: [], isBot: true});
       }
 
-      $lobby.classList.add('hidden');
-      $game.classList.remove('hidden');
+      UI.lobby.classList.add('hidden');
+      UI.game.classList.remove('hidden');
       $('player-name-display').innerText = pName;
 
-      // Animation: Deal cards
+      // Deal Cards Animation
       for(let i=0; i<7; i++) {
         for(let p of state.players) {
-          p.hand.push(drawCard()[0]);
+          p.hand.push(drawCards()[0]);
           playSound('draw');
           await sleep(80);
           renderHand(); renderBots(); updateUI();
         }
       }
-      
-      state.isDealing = false; 
 
-      // Start Discard
-      let start = drawCard()[0];
-      while(start.c === 'black' || ['S','R','+2'].includes(start.v)) {
-        state.deck.unshift(start); state.deck = shuffle(state.deck);
-        start = drawCard()[0];
+      // Start Discard Pile (must not be wild or special if possible, standard rules vary)
+      // Simplified: Just find a number card to start
+      let startCard = drawCards()[0];
+      while(startCard.c === 'black' || SPECIAL_VALUES.includes(startCard.v)) {
+        state.deck.unshift(startCard); // Put back on bottom
+        state.deck = shuffle(state.deck); // Shuffle
+        startCard = drawCards()[0];
       }
-      state.discard.push(start);
-      state.color = start.c;
+      state.discard.push(startCard);
+      state.activeColor = startCard.c;
       
       playSound('card');
       updateUI();
@@ -780,70 +731,92 @@
     }
 
     function endGame(winner) {
-      state.isOver = true;
+      state.isOver = false;
+      state.active = false;
+      
       const txt = winner === 0 ? 'VICTORY!' : 'GAME OVER';
       const sub = winner === 0 ? 'You played all your cards!' : `${state.players[winner].name} wins.`;
       $('winner-text').innerText = txt;
       $('win-subtitle').innerText = sub;
-      $gameOver.classList.add('active');
+      UI.gameOver.classList.add('active');
       if(winner === 0) playSound('win'); else playSound('lose');
     }
 
-    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function executePlayerTurn(cardIndex) {
+        if (state.turn !== 0 || state.isOver || !state.active) return;
+        playCard(0, cardIndex);
+    }
 
     // --- Event Listeners ---
     document.addEventListener('DOMContentLoaded', () => {
         $('btn-start').addEventListener('click', startGame);
 
         $('btn-restart').addEventListener('click', () => {
-            $gameOver.classList.remove('active'); 
+            UI.gameOver.classList.remove('active'); 
             startGame();
         });
+        
         $('btn-lobby').addEventListener('click', () => {
-            $game.classList.add('hidden'); 
-            $lobby.classList.remove('hidden'); 
-            $gameOver.classList.remove('active');
+            UI.game.classList.add('hidden'); 
+            UI.lobby.classList.remove('hidden'); 
+            UI.gameOver.classList.remove('active');
         });
 
         $('btn-bot-plus').addEventListener('click', () => {
-            let v = parseInt($('bot-count').innerText);
-            if(v < 5) $('bot-count').innerText = v+1;
+            let v = parseInt(UI.botCount.innerText);
+            if(v < 5) UI.botCount.innerText = v+1;
         });
         
         $('btn-bot-minus').addEventListener('click', () => {
-            let v = parseInt($('bot-count').innerText);
-            if(v > 1) $('bot-count').innerText = v-1;
+            let v = parseInt(UI.botCount.innerText);
+            if(v > 1) UI.botCount.innerText = v-1;
         });
 
-        $draw.addEventListener('click', () => {
+        UI.draw.addEventListener('click', () => {
           if (state.turn !== 0 || state.isOver || !state.active) return;
-          state.players[0].hand.push(...drawCard(1));
+          state.players[0].hand.push(...drawCards(1));
           playSound('draw');
-          nextTurn();
+          
+          // Basic rule: If you draw, you can play if valid, else pass. 
+          // Here we auto-pass for simplicity, or allow playing if valid.
+          // Let's render hand so they can play the drawn card if valid.
+          renderHand();
+          updateUI();
+          
+          // Check if drawn card is playable
+          const drawnCard = state.players[0].hand[state.players[0].hand.length - 1];
+          if(!checkValidPlay(drawnCard)) {
+              advanceTurn(); // Auto pass if drawn card isn't playable
+          }
         });
 
-        $unoBtn.addEventListener('click', () => {
+        UI.unoBtn.addEventListener('click', () => {
           state.saidUno = true;
-          $unoBtn.classList.remove('active');
-          $unoBtn.style.background = '#2a9d8f'; 
-          setTimeout(() => $unoBtn.style.background = '', 300);
+          UI.unoBtn.classList.remove('active');
+          UI.unoBtn.style.background = '#2a9d8f'; 
+          setTimeout(() => UI.unoBtn.style.background = '', 300);
         });
 
         document.querySelectorAll('.color-btn').forEach(b => {
           b.addEventListener('click', () => {
-            state.color = b.dataset.color;
-            $colorPicker.classList.remove('active');
-            applyEffect(state.pendingWild, 0);
+            if(!state.pendingWild) return;
+            
+            state.activeColor = b.dataset.color;
+            UI.colorPicker.classList.remove('active');
+            
+            // Apply effect of the pending wild card
+            applyCardEffect(state.pendingWild, 0);
             state.pendingWild = null;
-            nextTurn();
+            
+            advanceTurn();
           });
         });
     });
 
     document.addEventListener('keydown', e => {
       if (state.isOver || !state.active) return;
-      if (e.key === 'u' || e.key === 'U') $unoBtn.click();
-      if (e.key === 'd' || e.key === 'D') $draw.click();
+      if (e.key === 'u' || e.key === 'U') UI.unoBtn.click();
+      if (e.key === 'd' || e.key === 'D') UI.draw.click();
     });
 
   </script>
