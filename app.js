@@ -264,49 +264,132 @@ function createDeck() {
   return shuffle(deck);
 }
 
-// Card Rendering
+// ==========================================
+// CARD RENDERING (FIXED WITH SVG)
+// ==========================================
 function renderCard(card, isBack = false) {
   const el = document.createElement('div');
-  
+  el.className = 'uno-card';
+
+  // --- 1. RENDER Back of Card ---
   if (isBack) {
-    el.className = 'uno-card card-back';
-    el.innerHTML = '<div class="card-logo">UNO</div>';
+    el.classList.add('card-back');
+    // Using the SVG structure from your HTML for the back
+    el.innerHTML = `
+      <svg width="240" height="360" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 360">
+         <defs>
+          <linearGradient id="unoRedLocal" x1="0%" y1="0%" x2="100%" y2="100%">
+           <stop offset="0%" stop-color="#FF1744"/>
+           <stop offset="100%" stop-color="#D50000"/>
+          </linearGradient>
+          <linearGradient id="unoYellowLocal" x1="0%" y1="0%" x2="0%" y2="100%">
+           <stop offset="0%" stop-color="#FFEB3B"/>
+           <stop offset="100%" stop-color="#FBC02D"/>
+          </linearGradient>
+         </defs>
+         <g>
+          <rect width="240" height="360" rx="18" fill="#1a1a1a"/>
+          <rect x="10" y="10" width="220" height="340" rx="12" fill="none" stroke="#ffffff" stroke-width="8"/>
+          <ellipse cx="118.78647" cy="183.36061" rx="88" ry="156.33998" fill="url(#unoRedLocal)" stroke="null" transform="rotate(27 118.786 183.361)"/>
+          <text x="125" y="195" font-family="Arial Black, sans-serif" font-size="75" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" letter-spacing="2" transform="rotate(-16.0628 125 184.453)">UNO</text>
+          <text transform="rotate(-15.8894 120 179.453)" x="120" y="190" font-family="Arial Black, sans-serif" font-size="75" font-weight="900" fill="url(#unoYellowLocal)" stroke="#000000" stroke-width="2" text-anchor="middle" dominant-baseline="middle" letter-spacing="2">UNO</text>
+         </g>
+        </svg>`;
     return el;
   }
 
-  let cardClass = 'uno-card ' + card.c;
-  let content = '';
-  let cornerValue = card.v;
+  // --- 2. Render Front of Card ---
   
-  if (card.v === 'S') {
-    cardClass += ' skip';
-    content = '<div class="card-inner"><div class="skip-symbol"></div></div>';
-    cornerValue = '⊘';
-  } else if (card.v === 'R') {
-    cardClass += ' reverse';
-    content = '<div class="card-inner"><div class="reverse-arrows"><span class="reverse-arrow">⟲</span><span class="reverse-arrow">⟲</span></div></div>';
-    cornerValue = '⟲';
-  } else if (card.v === '+2') {
-    cardClass += ' draw-two';
-    content = '<div class="card-inner"><span class="draw-two-value">+2</span></div>';
-  } else if (card.v === 'W') {
-    cardClass += ' wild-card';
-    content = '<div class="card-inner"><span class="wild-label">WILD</span></div>';
-    cornerValue = 'W';
-  } else if (card.v === '+4') {
-    cardClass += ' wild-card wild-draw';
-    content = '<div class="card-inner"><span class="wild-draw-value">+4</span></div>';
-    cornerValue = '+4';
-  } else {
-    content = '<div class="card-inner"><span class="card-value">' + card.v + '</span></div>';
+  // Determine Fill Color (uses gradients defined in HTML head)
+  let fill = '';
+  let isWild = false;
+  
+  if (card.c === 'red') fill = 'url(#unoRed)';
+  else if (card.c === 'blue') fill = 'url(#unoBlue)';
+  else if (card.c === 'green') fill = 'url(#unoGreen)';
+  else if (card.c === 'yellow') fill = 'url(#unoYellow)';
+  else {
+    fill = '#1a1a1a'; // Wild card background
+    isWild = true;
   }
-  
-  el.className = cardClass;
-  el.innerHTML = 
-    '<span class="card-corner top">' + cornerValue + '</span>' + 
-    content + 
-    '<span class="card-corner bottom">' + cornerValue + '</span>';
-  
+
+  // Prepare Content Variables
+  let centerContent = '';
+  let cornerValue = card.v;
+  let centerFontSize = 180;
+
+  // Logic for specific card types
+  if (card.v === 'S') {
+    cornerValue = '⊘';
+    centerFontSize = 120;
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">${cornerValue}</text>
+                      <text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">${cornerValue}</text>`;
+  } else if (card.v === 'R') {
+    cornerValue = '⟲';
+    centerFontSize = 120;
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">${cornerValue}</text>
+                      <text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">${cornerValue}</text>`;
+  } else if (card.v === '+2') {
+    centerFontSize = 120;
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">+2</text>
+                      <text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">+2</text>`;
+  } else if (card.v === 'W') {
+    cornerValue = 'W';
+    centerContent = ''; // Wild visuals handled by pattern
+  } else if (card.v === '+4') {
+    cornerValue = '+4';
+    // Special skew transform for +4
+    centerContent = `<g transform="skewX(-10)">
+        <text stroke-width="10" stroke="#000000" dominant-baseline="middle" text-anchor="middle" fill="#000000" font-weight="900" font-size="100" font-family="Arial Black, sans-serif" y="186" x="152.41306">+4</text>
+        <text dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-weight="900" font-size="100" font-family="Arial Black, sans-serif" y="179" x="145.41306">+4</text>
+      </g>`;
+  } else {
+    // Standard Numbers 0-9
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">${card.v}</text>
+                      <text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">${card.v}</text>`;
+  }
+
+  // Wild Card Pattern (Multi-color ellipse)
+  let wildPattern = '';
+  if (isWild) {
+    wildPattern = `
+      <g transform="rotate(-50 120 180)">
+       <path fill="#0055aa" d="m120,180l0,-85a145,85 0 0 1 145,85l-145,0z"/>
+       <path fill="#2d801a" d="m120,180l145,0a145,85 0 0 1 -145,85l0,-85z"/>
+       <path fill="#ffcc00" d="m120,180l0,85a145,85 0 0 1 -145,-85l145,0z"/>
+       <path fill="#d50000" d="m120,180l-145,0a145,85 0 0 1 145,-85l0,85z"/>
+       <ellipse stroke-width="4" stroke="#ffffff" fill="none" ry="85" rx="145" cy="180" cx="120"/>
+      </g>`;
+  }
+
+  // Center Ellipse (White ring) - Only for colored cards
+  let centerEllipse = '';
+  if (!isWild) {
+    centerEllipse = `<ellipse transform="rotate(-60.409 117.875 181.408)" stroke="#ffffff" cx="117.87508" cy="181.40815" rx="159.19945" ry="82.07582" fill="none" stroke-width="6"/>`;
+  }
+
+  // Construct Final SVG String
+  el.innerHTML = `
+    <svg width="240" height="360" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 360">
+     <g>
+      <rect x="0" y="0" width="240" height="360" rx="25" ry="25" fill="${fill}"/>
+      <rect x="10" y="10" width="220" height="340" rx="20" ry="20" fill="none" stroke="#ffffff" stroke-width="8"/>
+      ${centerEllipse}
+      ${wildPattern}
+      ${centerContent}
+      <!-- Corner Top Left -->
+      <g>
+       <text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#000000" text-anchor="middle" x="44.67969" y="61">${cornerValue}</text>
+       <text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#ffffff" text-anchor="middle" y="58" x="41.67969">${cornerValue}</text>
+      </g>
+      <!-- Corner Bottom Right (Rotated) -->
+      <g transform="rotate(180 162 238)">
+       <text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#000000" text-anchor="middle" x="45" y="61">${cornerValue}</text>
+       <text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#ffffff" text-anchor="middle" y="58" x="42">${cornerValue}</text>
+      </g>
+     </g>
+    </svg>`;
+
   return el;
 }
 
