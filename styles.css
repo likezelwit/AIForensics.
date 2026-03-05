@@ -249,6 +249,67 @@ body {
   font-size: 0.85rem;
 }
 
+/* ==================== LANDSCAPE PROMPT ==================== */
+.landscape-prompt {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(145deg, #2d2d44 0%, #1a1a2e 100%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 20px;
+}
+
+.landscape-prompt.show {
+  display: flex;
+}
+
+.landscape-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  animation: rotate-phone 2s ease-in-out infinite;
+}
+
+@keyframes rotate-phone {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+}
+
+.landscape-title {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.landscape-text {
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
+}
+
+.landscape-btn {
+  padding: 14px 32px;
+  border-radius: 25px;
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(145deg, #55efc4, #00b894);
+  color: white;
+  box-shadow: 0 8px 25px rgba(0, 184, 148, 0.35);
+  transition: all 0.3s ease;
+}
+
+.landscape-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(0, 184, 148, 0.4);
+}
+
 /* ==================== MENU SCREEN ==================== */
 .menu-screen {
   min-height: 100vh;
@@ -640,7 +701,7 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotateX(45deg);
+  transform: translate(-50%, -50%) rotateX(25deg);
   width: min(420px, 85vw);
   height: min(300px, 55vw);
   border-radius: 50%;
@@ -667,11 +728,11 @@ body {
 }
 
 @keyframes table-shake {
-  0%, 100% { transform: translate(-50%, -50%) rotateX(45deg) translateX(0); }
-  20% { transform: translate(-50%, -50%) rotateX(45deg) translateX(-10px); }
-  40% { transform: translate(-50%, -50%) rotateX(45deg) translateX(10px); }
-  60% { transform: translate(-50%, -50%) rotateX(45deg) translateX(-5px); }
-  80% { transform: translate(-50%, -50%) rotateX(45deg) translateX(5px); }
+  0%, 100% { transform: translate(-50%, -50%) rotateX(25deg) translateX(0); }
+  20% { transform: translate(-50%, -50%) rotateX(25deg) translateX(-10px); }
+  40% { transform: translate(-50%, -50%) rotateX(25deg) translateX(10px); }
+  60% { transform: translate(-50%, -50%) rotateX(25deg) translateX(-5px); }
+  80% { transform: translate(-50%, -50%) rotateX(25deg) translateX(5px); }
 }
 
 /* Direction Indicator */
@@ -711,6 +772,112 @@ body {
 @keyframes spin-counter {
   from { transform: rotate(360deg); }
   to { transform: rotate(0deg); }
+}
+
+/* ==================== ACTION CARD EFFECTS ==================== */
+.action-flash-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.action-flash-overlay.active {
+  opacity: 1;
+  animation: flash-pulse 0.5s ease-out;
+}
+
+.action-flash-overlay.skip {
+  background: radial-gradient(ellipse at center, rgba(255, 71, 87, 0.4) 0%, transparent 70%);
+}
+
+.action-flash-overlay.reverse {
+  background: radial-gradient(ellipse at center, rgba(55, 66, 250, 0.4) 0%, transparent 70%);
+}
+
+.action-flash-overlay.plus {
+  background: radial-gradient(ellipse at center, rgba(255, 165, 2, 0.4) 0%, transparent 70%);
+}
+
+.action-flash-overlay.wild {
+  background: conic-gradient(from 0deg, rgba(255,71,87,0.3), rgba(255,165,2,0.3), rgba(46,213,115,0.3), rgba(55,66,250,0.3), rgba(255,71,87,0.3));
+  animation: flash-spin 0.6s ease-out;
+}
+
+@keyframes flash-pulse {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes flash-spin {
+  0% { opacity: 0; transform: rotate(0deg); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(180deg); }
+}
+
+/* Skip Symbol on Player */
+.skip-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 60px;
+  height: 60px;
+  background: var(--uno-red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  box-shadow: 0 0 30px rgba(255, 71, 87, 0.6);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.skip-symbol.show {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.skip-symbol svg {
+  width: 30px;
+  height: 30px;
+  fill: white;
+}
+
+/* Reverse Symbol */
+.reverse-symbol {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 100px;
+  height: 100px;
+  background: var(--uno-blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  box-shadow: 0 0 40px rgba(55, 66, 250, 0.6);
+  opacity: 0;
+}
+
+.reverse-symbol.show {
+  animation: reverse-pop 0.8s ease-out forwards;
+}
+
+@keyframes reverse-pop {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(-180deg); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0) rotate(180deg); opacity: 0; }
+}
+
+.reverse-symbol svg {
+  width: 50px;
+  height: 50px;
+  fill: white;
 }
 
 /* ==================== PLAYER ZONES - CIRCULAR LAYOUT ==================== */
@@ -814,6 +981,46 @@ body {
   border-radius: 10px;
   font-size: 0.65rem;
   display: inline-block;
+}
+
+/* Player Timer (moved to player info) */
+.player-turn-timer {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #2ed573, #1e8449);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+}
+
+.player-turn-timer.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.player-turn-timer.warning {
+  background: linear-gradient(145deg, #ffa502, #e67e22);
+  animation: timer-pulse 0.5s infinite alternate;
+}
+
+.player-turn-timer.danger {
+  background: linear-gradient(145deg, #ff4757, #c0392b);
+  animation: timer-pulse 0.3s infinite alternate;
+}
+
+@keyframes timer-pulse {
+  to { transform: scale(1.1); }
 }
 
 /* Bot Cards */
@@ -1292,16 +1499,6 @@ body {
   50% { transform: scale(1.4); opacity: 0.6; }
 }
 
-.player-timer {
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 8px;
-  background: rgba(45, 45, 68, 0.1);
-}
-
-.player-timer.warning { background: rgba(255, 165, 2, 0.2); color: #c0392b; }
-.player-timer.danger { background: rgba(255, 71, 87, 0.2); color: var(--uno-red); }
-
 /* 3D Color Picker */
 .color-picker-3d {
   position: fixed;
@@ -1489,7 +1686,7 @@ body {
 }
 
 /* ==================== RESPONSIVE - MOBILE PORTRAIT ==================== */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (orientation: portrait) {
   :root { 
     --card-width: 55px; 
     --card-height: 77px; 
@@ -1518,6 +1715,11 @@ body {
   .bot-cards-vertical .uno-card {
     width: 30px;
     height: 42px;
+  }
+  
+  .turn-indicator {
+    font-size: 0.75rem;
+    padding: 6px 14px;
   }
 }
 
