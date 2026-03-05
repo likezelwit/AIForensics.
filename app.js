@@ -619,6 +619,15 @@ function renderHand() {
   });
 }
 
+// ==========================================
+// FUNGSI YANG HILANG (FIX)
+// ==========================================
+async function executePlayerTurn(cardIndex) {
+  if (state.turn !== 0 || state.isOver || !state.active) return;
+  stopTimer();
+  await playCard(0, cardIndex);
+}
+
 // Timer
 function startTimer() {
   if (!gameSettings.timer) return;
@@ -1422,67 +1431,16 @@ function endGame(winnerIndex, isTimeUp) {
   if (gameOver) gameOver.classList.add('active');
 }
 
-// ==========================================
-// RENDER GAME TABLE (Fix Layout Pemain)
-// ==========================================
+// Render Game Table (Not strictly needed if HTML is static, but useful for dynamic)
 function renderGameTable() {
   const gameTable = document.getElementById('game-table');
   if (!gameTable) return;
   
-  // Hapus zona lama
-  gameTable.querySelectorAll('.player-zone').forEach(z => z.remove());
+  // Remove existing zones if dynamic
+  // gameTable.querySelectorAll('.player-zone').forEach(z => z.remove());
   
-  const playerCount = state.players.length;
-  
-  // Buat zona untuk setiap pemain
-  state.players.forEach((player, idx) => {
-    const position = getPositionClass(idx);
-    const zone = document.createElement('div');
-    zone.className = `player-zone player-${position}`;
-    
-    // Info Pemain (Nama, Avatar, Jumlah Kartu)
-    const info = document.createElement('div');
-    info.className = 'player-info glass-panel';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'player-avatar';
-    avatar.style.background = getPlayerColor(idx);
-    
-    const nameDiv = document.createElement('div');
-    nameDiv.className = 'player-name';
-    nameDiv.textContent = player.name;
-    
-    const countDiv = document.createElement('div');
-    countDiv.className = 'card-count';
-    countDiv.textContent = player.hand.length + ' cards';
-    
-    info.appendChild(avatar);
-    info.appendChild(nameDiv);
-    info.appendChild(countDiv);
-    zone.appendChild(info);
-    
-    // Container Kartu Bot (Horizontal/Vertical berdasarkan posisi)
-    if (idx !== 0) {
-      const cardsContainer = document.createElement('div');
-      // Tentukan orientasi berdasarkan posisi
-      if (position === 'left' || position === 'right') {
-        cardsContainer.className = 'bot-cards-vertical'; // Kartu bertumpuk vertikal
-      } else {
-        cardsContainer.className = 'bot-cards-horizontal'; // Kartu bertumpuk horizontal
-      }
-      
-      const displayCount = Math.min(player.hand.length, 7);
-      for (let i = 0; i < displayCount; i++) {
-        cardsContainer.appendChild(renderCard(null, true));
-      }
-      
-      zone.appendChild(cardsContainer);
-    }
-    
-    gameTable.appendChild(zone);
-  });
-  
-  updatePlayerZones();
+  // Implementation depends on whether you want JS to create zones or HTML holds them.
+  // Given the provided HTML has static zones, we rely on updatePlayerZones.
 }
 
 // ==========================================
@@ -1513,13 +1471,11 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('menu-screen');
   });
   
-  // Draw pile - LOGIKA BARU: Muncul Pop-up Keep/Play
+  // Draw pile
   document.getElementById('draw-pile')?.addEventListener('click', async () => {
     if (state.turn !== 0 || state.isOver || !state.active) return;
     
-    // Jika sedang ada stack +2/+4 dan harus ambil kartu
     if (state.drawStack > 0 && gameSettings.stacking) {
-      // Cek apakah bisa stack, jika tidak paksa ambil
       const canStack = state.players[0].hand.some(c => canStackCard(c));
       if (canStack) {
         showGameMessage("You have a card to stack!");
@@ -1537,8 +1493,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    // Logika Draw Biasa dengan Pop-up
-    stopTimer(); // Stop timer saat memilih
+    stopTimer();
     
     const card = drawCards(1)[0];
     if (!card) {
@@ -1546,22 +1501,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    // Tambahkan ke tangan sementara untuk pengecekan
     state.players[0].hand.push(card);
     
-    // Render tangan dulu agar kartu muncul
     renderHand();
     updateUI();
     
-    // Cek apakah kartu bisa dimainkan
     const isPlayable = checkValidPlay(card);
     
     if (isPlayable) {
-      // Tampilkan pop-up Keep or Play
       showDrawnCardPopup(card, true);
-      // Timer tetap berhenti sampai pemilih memilih
     } else {
-      // Jika tidak bisa dimainkan, langsung keep dan giliran berganti
       showGameMessage("Cannot play this card");
       await sleep(500);
       advanceTurn();
@@ -1585,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showGameMessage('UNO!');
       playSound('uno');
       vibrate(100);
-      renderGameTable(); // Update UI bot zone
+      updatePlayerZones();
     }
   });
   
@@ -1665,8 +1614,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-// Helper: Sleep
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
