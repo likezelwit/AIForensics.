@@ -10,10 +10,9 @@ const firebaseConfig = {
   measurementId: "G-976XGC3C0F"
 };
 
-// ==================== GLOBAL VARIABLES ====================
-let database = null;
-let auth = null;
-let firebaseReady = false;
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
 // ==================== CONSTANTS ====================
 const COLORS = ['red', 'blue', 'green', 'yellow'];
@@ -46,8 +45,7 @@ const playerStats = {
   level: 12,
   xp: 2450,
   xpNeeded: 3000,
-  coins: 1250,
-  uid: null
+  coins: 1250
 };
 
 // Game State
@@ -98,40 +96,13 @@ let multiplayerState = {
   playerPositions: {},
   isSearching: false,
   searchRef: null,
-  callbacks: {},
-  currentUser: null
+  callbacks: {}
 };
 
 // Audio Context
 let audioCtx = null;
 
 // ==================== INITIALIZATION ====================
-function initFirebase() {
-  try {
-    // Check if Firebase is available
-    if (typeof firebase === 'undefined') {
-      console.error('Firebase SDK not loaded');
-      return false;
-    }
-
-    // Initialize Firebase only if not already initialized
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
-    database = firebase.database();
-    auth = firebase.auth();
-    firebaseReady = true;
-    
-    console.log('Firebase initialized successfully');
-    return true;
-  } catch (error) {
-    console.error('Firebase initialization error:', error);
-    firebaseReady = false;
-    return false;
-  }
-}
-
 function initAudio() {
   if (!audioCtx) {
     try {
@@ -142,96 +113,63 @@ function initAudio() {
   }
 }
 
-// ==================== AUTHENTICATION ====================
-function initAuth() {
-  // Show loading immediately
-  showScreen('loading-screen');
+function playSound(type) {
+  if (!audioCtx || !gameSettings.sound) return;
   
-  // Set a timeout to prevent infinite loading
-  const authTimeout = setTimeout(() => {
-    console.log('Auth timeout - proceeding to menu');
-    runLoadingScreen();
-  }, 5000);
-
-  // Try to initialize Firebase
-  const firebaseOk = initFirebase();
-
-  if (!firebaseOk || !auth) {
-    clearTimeout(authTimeout);
-    console.log('Firebase not available - running offline mode');
-    setTimeout(() => runLoadingScreen(), 1000);
-    return;
-  }
-
-  // Listen for auth state changes
-  auth.onAuthStateChanged((user) => {
-    clearTimeout(authTimeout);
+  try {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
     
-    if (user) {
-      multiplayerState.currentUser = user;
-      multiplayerState.playerId = user.uid;
-      
-      if (user.isAnonymous) {
-        multiplayerState.playerName = 'Guest_' + Math.random().toString(36).substr(2, 4);
-        playerStats.name = multiplayerState.playerName;
-      } else {
-        multiplayerState.playerName = user.displayName || 'Player';
-        playerStats.name = multiplayerState.playerName;
-      }
-      
-      updatePlayerUI();
+    const sounds = {
+      card: { type: 'triangle', freq: [800, 400], dur: 0.1, vol: 0.08 },
+      win: { type: 'sine', freq: [523, 659, 784, 1047], dur: 0.8, vol: 0.1 },
+      lose: { type: 'sawtooth', freq: [200, 100], dur: 0.5, vol: 0.06 },
+      draw: { type: 'sine', freq: [500, 400], dur: 0.08, vol: 0.05 },
+      tick: { type: 'sine', freq: [900, 900], dur: 0.06, vol: 0.04 },
+      deal: { type: 'triangle', freq: [600, 700], dur: 0.08, vol: 0.05 },
+      skip: { type: 'square', freq: [350, 450, 350], dur: 0.35, vol: 0.06 },
+      reverse: { type: 'sine', freq: [450, 550, 450], dur: 0.3, vol: 0.06 },
+      wild: { type: 'sine', freq: [350, 500, 700, 900], dur: 0.5, vol: 0.08 },
+      combo: { type: 'sine', freq: [700, 900, 1100], dur: 0.25, vol: 0.06 },
+      uno: { type: 'sine', freq: [523, 659, 784], dur: 0.6, vol: 0.1 },
+      emote: { type: 'sine', freq: [600, 800], dur: 0.15, vol: 0.05 },
+      join: { type: 'sine', freq: [400, 600, 800], dur: 0.3, vol: 0.08 },
+      start: { type: 'sine', freq: [600, 800, 1000], dur: 0.4, vol: 0.1 }
+    };
+    
+    const s = sounds[type];
+    if (!s) return;
+
+    osc.type = s.type;
+    
+    if (Array.isArray(s.freq) && s.freq.length > 1) {
+      const noteLength = s.dur / s.freq.length;
+      s.freq.forEach((f, i) => {
+        const startTime = t + (i * noteLength);
+        osc.frequency.setValueAtTime(Math.max(1, f), startTime);
+        if (i < s.freq.length - 1) {
+          osc.frequency.exponentialRampToValueAtTime(Math.max(1, s.freq[i + 1]), startTime + noteLength);
+        }
+      });
     } else {
-      // No user signed in - continue as guest
-      multiplayerState.playerId = 'guest_' + Date.now();
-      multiplayerState.playerName = 'Guest_' + Math.random().toString(36).substr(2, 4);
-      playerStats.name = multiplayerState.playerName;
+      osc.frequency.setValueAtTime(Array.isArray(s.freq) ? s.freq[0] : s.freq, t);
     }
     
-    runLoadingScreen();
-  }, (error) => {
-    clearTimeout(authTimeout);
-    console.error('Auth error:', error);
-    runLoadingScreen();
-  });
+    g.gain.setValueAtTime(s.vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + s.dur);
+    
+    osc.start(t);
+    osc.stop(t + s.dur);
+  } catch (e) {}
 }
 
-function signInWithGoogle() {
-  if (!auth) {
-    showToast('Authentication not available');
-    return;
+function vibrate(pattern) {
+  if (navigator.vibrate) {
+    navigator.vibrate(pattern);
   }
-  
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch((error) => {
-    console.error("Google Sign-In Error:", error);
-    showToast("Google Sign-In failed. Try again or play as Guest.");
-  });
-}
-
-function signInAnonymously() {
-  if (!auth) {
-    showToast('Authentication not available');
-    return;
-  }
-  
-  auth.signInAnonymously().catch((error) => {
-    console.error("Anonymous Sign-In Error:", error);
-    showToast("Failed to start guest session.");
-  });
-}
-
-function signOutUser() {
-  if (multiplayerState.lobbyId) {
-    leaveLobby();
-  }
-  if (auth) {
-    auth.signOut();
-  }
-}
-
-function updatePlayerUI() {
-  const nameEl = document.getElementById('player-name');
-  if (nameEl) nameEl.textContent = playerStats.name;
 }
 
 // ==================== UTILITY FUNCTIONS ====================
@@ -267,13 +205,7 @@ function getPositionClass(idx, totalPlayers) {
     const positions = ['bottom', 'right', 'left'];
     return positions[idx];
   }
-  if (totalPlayers === 4) {
-    return ['bottom', 'left', 'top', 'right'][idx];
-  }
-  if (totalPlayers === 5) {
-    return ['bottom', 'left', 'top-left', 'top-right', 'right'][idx];
-  }
-  return ['bottom', 'left', 'top', 'right'][idx % 4];
+  return ['bottom', 'left', 'top', 'right'][idx];
 }
 
 function showScreen(screenId) {
@@ -331,7 +263,7 @@ async function runLoadingScreen() {
   const loadingScreen = document.getElementById('loading-screen');
   
   const steps = [
-    { progress: 25, text: "Initializing..." },
+    { progress: 25, text: "Connecting to server..." },
     { progress: 50, text: "Loading assets..." },
     { progress: 75, text: "Preparing game..." },
     { progress: 100, text: "Ready!" }
@@ -340,23 +272,19 @@ async function runLoadingScreen() {
   for (const step of steps) {
     if (loadingBar) loadingBar.style.width = step.progress + '%';
     if (loadingText) loadingText.textContent = step.text;
-    await sleep(300);
+    await sleep(400);
   }
   
-  await sleep(400);
+  await sleep(500);
   if (loadingScreen) loadingScreen.classList.add('hidden');
   showScreen('menu-screen');
   
-  // Setup connection monitor if Firebase is ready
-  if (firebaseReady && database) {
-    setupConnectionMonitor();
-  }
+  // Setup connection monitor
+  setupConnectionMonitor();
 }
 
 // ==================== CONNECTION STATUS ====================
 function setupConnectionMonitor() {
-  if (!database) return;
-  
   const connectedRef = database.ref('.info/connected');
   connectedRef.on('value', (snap) => {
     const connected = snap.val() === true;
@@ -386,67 +314,7 @@ function updateConnectionStatus(connected) {
     statusEl.innerHTML = '<div class="connection-dot"></div><span>Connected</span>';
   } else {
     statusEl.className = 'connection-status disconnected';
-    statusEl.innerHTML = '<div class="connection-dot"></div><span>Offline</span>';
-  }
-}
-
-// ==================== SOUND ====================
-function playSound(type) {
-  if (!audioCtx || !gameSettings.sound) return;
-  
-  try {
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.connect(g);
-    g.connect(audioCtx.destination);
-    const t = audioCtx.currentTime;
-    
-    const sounds = {
-      card: { type: 'triangle', freq: [800, 400], dur: 0.1, vol: 0.08 },
-      win: { type: 'sine', freq: [523, 659, 784, 1047], dur: 0.8, vol: 0.1 },
-      lose: { type: 'sawtooth', freq: [200, 100], dur: 0.5, vol: 0.06 },
-      draw: { type: 'sine', freq: [500, 400], dur: 0.08, vol: 0.05 },
-      tick: { type: 'sine', freq: [900, 900], dur: 0.06, vol: 0.04 },
-      deal: { type: 'triangle', freq: [600, 700], dur: 0.08, vol: 0.05 },
-      skip: { type: 'square', freq: [350, 450, 350], dur: 0.35, vol: 0.06 },
-      reverse: { type: 'sine', freq: [450, 550, 450], dur: 0.3, vol: 0.06 },
-      wild: { type: 'sine', freq: [350, 500, 700, 900], dur: 0.5, vol: 0.08 },
-      combo: { type: 'sine', freq: [700, 900, 1100], dur: 0.25, vol: 0.06 },
-      uno: { type: 'sine', freq: [523, 659, 784], dur: 0.6, vol: 0.1 },
-      emote: { type: 'sine', freq: [600, 800], dur: 0.15, vol: 0.05 },
-      join: { type: 'sine', freq: [400, 600, 800], dur: 0.3, vol: 0.08 },
-      start: { type: 'sine', freq: [600, 800, 1000], dur: 0.4, vol: 0.1 }
-    };
-    
-    const s = sounds[type];
-    if (!s) return;
-
-    osc.type = s.type;
-    
-    if (Array.isArray(s.freq) && s.freq.length > 1) {
-      const noteLength = s.dur / s.freq.length;
-      s.freq.forEach((f, i) => {
-        const startTime = t + (i * noteLength);
-        osc.frequency.setValueAtTime(Math.max(1, f), startTime);
-        if (i < s.freq.length - 1) {
-          osc.frequency.exponentialRampToValueAtTime(Math.max(1, s.freq[i + 1]), startTime + noteLength);
-        }
-      });
-    } else {
-      osc.frequency.setValueAtTime(Array.isArray(s.freq) ? s.freq[0] : s.freq, t);
-    }
-    
-    g.gain.setValueAtTime(s.vol, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + s.dur);
-    
-    osc.start(t);
-    osc.stop(t + s.dur);
-  } catch (e) {}
-}
-
-function vibrate(pattern) {
-  if (navigator.vibrate) {
-    navigator.vibrate(pattern);
+    statusEl.innerHTML = '<div class="connection-dot"></div><span>Disconnected</span>';
   }
 }
 
@@ -582,10 +450,6 @@ function renderCard(card, isBack = false) {
 
 // ==================== MENU & MODAL FUNCTIONS ====================
 function showMultiplayerOptions() {
-  if (!firebaseReady || !database) {
-    showToast('Multiplayer requires internet connection');
-    return;
-  }
   const modal = document.getElementById('multiplayer-options-modal');
   if (modal) modal.classList.add('active');
 }
@@ -607,25 +471,25 @@ function showCreateLobby() {
 }
 
 function setupModalButtons(modal) {
-  modal.querySelectorAll('.mode-btn').forEach(btn => {
-    if (!btn.dataset.initialized) {
-      btn.addEventListener('click', () => {
-        modal.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      });
-      btn.dataset.initialized = "true";
-    }
-  });
-  
-  modal.querySelectorAll('.count-btn').forEach(btn => {
-    if (!btn.dataset.initialized) {
-      btn.addEventListener('click', () => {
-        modal.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      });
-      btn.dataset.initialized = "true";
-    }
-  });
+    modal.querySelectorAll('.mode-btn').forEach(btn => {
+      if (!btn.dataset.initialized) {
+        btn.addEventListener('click', () => {
+          modal.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        btn.dataset.initialized = "true";
+      }
+    });
+    
+    modal.querySelectorAll('.count-btn').forEach(btn => {
+      if (!btn.dataset.initialized) {
+        btn.addEventListener('click', () => {
+          modal.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        btn.dataset.initialized = "true";
+      }
+    });
 }
 
 function closeCreateLobby() {
@@ -639,11 +503,6 @@ function togglePrivate() {
 }
 
 async function createLobby() {
-  if (!firebaseReady || !database) {
-    showToast('Multiplayer requires internet connection');
-    return;
-  }
-  
   const nameInput = document.getElementById('host-name');
   const activeMode = document.querySelector('#create-lobby-modal .mode-btn.active');
   const activeCount = document.querySelector('#create-lobby-modal .count-btn.active');
@@ -654,10 +513,7 @@ async function createLobby() {
   multiplayerState.maxPlayers = parseInt(activeCount?.dataset.count) || 4;
   multiplayerState.isPrivate = privateToggle?.classList.contains('active') || false;
   multiplayerState.isHost = true;
-  
-  if (!multiplayerState.playerId) {
-    multiplayerState.playerId = 'player_' + Date.now();
-  }
+  multiplayerState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   
   const roomCode = generateRoomCode();
   multiplayerState.lobbyId = roomCode;
@@ -665,6 +521,7 @@ async function createLobby() {
   closeCreateLobby();
   showScreen('lobby-room');
   
+  // Create lobby in Firebase
   const lobbyRef = database.ref('lobbies/' + roomCode);
   multiplayerState.lobbyRef = lobbyRef;
   
@@ -706,11 +563,6 @@ async function createLobby() {
 
 // ==================== JOIN LOBBY ====================
 function showJoinLobby() {
-  if (!firebaseReady || !database) {
-    showToast('Multiplayer requires internet connection');
-    return;
-  }
-  
   closeMultiplayerOptions();
   const modal = document.getElementById('join-lobby-modal');
   if (modal) {
@@ -727,8 +579,6 @@ function closeJoinLobby() {
 }
 
 async function refreshPublicLobbies() {
-  if (!database) return;
-  
   const listEl = document.getElementById('public-lobby-list');
   if (!listEl) return;
   
@@ -792,14 +642,7 @@ async function joinLobbyByCode() {
 }
 
 async function joinLobbyById(lobbyId) {
-  if (!firebaseReady || !database) {
-    showToast('Multiplayer requires internet connection');
-    return;
-  }
-  
-  if (!multiplayerState.playerId) {
-    multiplayerState.playerId = 'player_' + Date.now();
-  }
+  multiplayerState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   multiplayerState.lobbyId = lobbyId;
   multiplayerState.isHost = false;
   
@@ -832,6 +675,7 @@ async function joinLobbyById(lobbyId) {
       return;
     }
     
+    // Add player to lobby
     const updates = {};
     updates['/players/' + multiplayerState.playerId] = {
       name: multiplayerState.playerName,
@@ -866,24 +710,16 @@ async function joinLobbyById(lobbyId) {
 
 // ==================== QUICK MATCH ====================
 function startQuickMatch() {
-  if (!firebaseReady || !database) {
-    showToast('Multiplayer requires internet connection');
-    return;
-  }
-  
   showScreen('quick-match-screen');
   performQuickMatch();
 }
 
 async function performQuickMatch() {
-  if (!database) return;
-  
-  if (!multiplayerState.playerId) {
-    multiplayerState.playerId = 'player_' + Date.now();
-  }
+  multiplayerState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   multiplayerState.isQuickMatch = true;
   
   try {
+    // Search for available public lobbies
     const snapshot = await database.ref('lobbies')
       .orderByChild('isPrivate')
       .equalTo(false)
@@ -919,8 +755,6 @@ function cancelQuickMatch() {
 }
 
 async function createQuickMatchLobby() {
-  if (!database) return;
-  
   multiplayerState.isHost = true;
   multiplayerState.playerName = 'Player_' + Math.random().toString(36).substr(2, 4);
   
@@ -970,12 +804,14 @@ async function createQuickMatchLobby() {
 
 // ==================== LOBBY UI ====================
 function updateLobbyUI() {
+  // Update Room Code
   const codeEl = document.getElementById('display-room-code');
   if (codeEl) codeEl.textContent = multiplayerState.lobbyId;
   
   const codeEl2 = document.getElementById('room-code-mini');
   if (codeEl2) codeEl2.textContent = multiplayerState.lobbyId;
 
+  // Update Mode & Player Count
   const modeEl = document.getElementById('lobby-mode-display');
   if (modeEl) modeEl.textContent = multiplayerState.gameMode.charAt(0).toUpperCase() + multiplayerState.gameMode.slice(1) + " Mode";
 }
@@ -999,6 +835,7 @@ function pasteCode() {
 }
 
 function changeTeam() {
+  // Placeholder for team mode logic if implemented
   showToast("Team changing not implemented in this mode.");
 }
 
@@ -1049,6 +886,7 @@ function renderLobbyPlayers(players, playerOrder) {
 function setupLobbyListeners() {
   if (!multiplayerState.lobbyRef) return;
   
+  // Listen for player changes
   multiplayerState.lobbyRef.child('players').on('value', (snapshot) => {
     const players = snapshot.val();
     if (!players) return;
@@ -1080,12 +918,13 @@ function setupLobbyListeners() {
   });
   
   multiplayerState.lobbyRef.on('value', (snapshot) => {
-    if (!snapshot.exists() && document.getElementById('lobby-room')?.classList.contains('active')) {
-      showToast('Lobby has been closed by the host');
+    if (!snapshot.exists()) {
+      showToast('Lobby has been closed');
       leaveLobby();
     }
   });
   
+  // Chat Listener
   multiplayerState.lobbyRef.child('chat').limitToLast(50).on('child_added', (snapshot) => {
     const msg = snapshot.val();
     if (msg) displayChatMessage(msg);
@@ -1124,8 +963,9 @@ async function toggleReady() {
     await playerRef.update({ isReady: !playerData.isReady });
     playSound('card');
     
+    // Update button text
     const btn = document.getElementById('ready-btn');
-    if (btn) btn.textContent = !playerData.isReady ? "Cancel" : "Ready Up";
+    if(btn) btn.textContent = !playerData.isReady ? "Cancel" : "Ready Up";
   }
 }
 
@@ -1146,9 +986,10 @@ function cleanupLobby() {
         multiplayerState.lobbyRef.remove();
       } else {
         multiplayerState.lobbyRef.child('playerOrder').set(newOrder);
-        
         if (multiplayerState.isHost) {
-          multiplayerState.lobbyRef.remove();
+          const newHostId = newOrder[0];
+          multiplayerState.lobbyRef.child('hostId').set(newHostId);
+          multiplayerState.lobbyRef.child('players/' + newHostId + '/isHost').set(true);
         }
       }
     });
@@ -1204,7 +1045,7 @@ async function sendChatMessage() {
 
 // ==================== PRESENCE SYSTEM ====================
 function setupPresence() {
-  if (!database || !multiplayerState.lobbyId || !multiplayerState.playerId) return;
+  if (!multiplayerState.lobbyId || !multiplayerState.playerId) return;
   
   const presenceRef = database.ref('presence/' + multiplayerState.lobbyId + '/' + multiplayerState.playerId);
   multiplayerState.playerPresenceRef = presenceRef;
@@ -1250,12 +1091,6 @@ function handlePlayerDisconnect(playerId, playerIndex) {
   const player = state.players[playerIndex];
   if (!player) return;
   
-  const connectedPlayers = state.players.filter(p => p.isConnected !== false);
-  if (connectedPlayers.length <= 1 && connectedPlayers[0]?.id === multiplayerState.playerId) {
-    endMultiplayerGame(multiplayerState.playerIndex);
-    return;
-  }
-
   player.isBot = true;
   player.isConnected = false;
   player.botReason = 'disconnected';
@@ -1329,6 +1164,7 @@ async function startMultiplayerGame() {
   const deck = createDeck();
   let startCard = deck.pop();
   
+  // Ensure first card is not a wild or action card for simplicity
   while (startCard.c === 'black' || ['S', 'R', '+2'].includes(startCard.v)) {
     deck.unshift(startCard);
     shuffle(deck);
@@ -1645,7 +1481,7 @@ async function advanceTurn() {
       playerHands: {}
     };
     
-    state.players.forEach((player) => {
+    state.players.forEach((player, idx) => {
       updates.playerHands[player.id] = player.hand;
     });
     
@@ -1854,9 +1690,7 @@ function updateTurnIndicator() {
 
 function updatePlayerZones() {
   state.players.forEach((player, idx) => {
-    const posClass = getPositionClass(idx, state.players.length);
-    const zone = document.querySelector('.player-zone.player-' + posClass);
-    
+    const zone = document.querySelector('.player-zone.player-' + getPositionClass(idx, state.players.length));
     if (!zone) return;
     
     const info = zone.querySelector('.player-info');
@@ -1877,6 +1711,7 @@ function updatePlayerZones() {
       }
     }
     
+    // Update player timer
     let timerEl = info?.querySelector('.player-turn-timer');
     if (!timerEl && info) {
       timerEl = document.createElement('div');
@@ -1900,6 +1735,7 @@ function updatePlayerZones() {
       avatar.classList.add('color-glow', state.activeColor);
     }
     
+    // UNO alert
     let unoAlert = zone.querySelector('.uno-alert');
     if (player.hand.length === 1) {
       if (!unoAlert) {
@@ -1912,10 +1748,12 @@ function updatePlayerZones() {
       unoAlert.remove();
     }
     
+    // Bot/disconnected indicator
     if (player.isBot || !player.isConnected) {
       nameEl.innerHTML = player.name + ' <span class="bot-indicator">🤖</span>';
     }
     
+    // Opponent cards
     if (idx !== multiplayerState.playerIndex) {
       const cardsContainer = zone.querySelector('.bot-cards-horizontal, .bot-cards-vertical');
       if (cardsContainer) {
@@ -2359,8 +2197,8 @@ async function rematch() {
   const modal = document.getElementById('game-over');
   if (modal) modal.classList.remove('active');
   
-  if (multiplayerState.isHost && multiplayerState.lobbyRef) {
-    await multiplayerState.lobbyRef.update({ status: 'waiting', game: null });
+  if (multiplayerState.isHost) {
+    await multiplayerState.lobbyRef?.update({ status: 'waiting', game: null });
   }
   
   showScreen('lobby-room');
@@ -2404,6 +2242,7 @@ function showLeaderboard() {
   const modal = document.getElementById('leaderboard-modal');
   if (modal) {
     modal.classList.add('active');
+    // Load dummy leaderboard for now
     const list = document.getElementById('leaderboard-list');
     if (list) {
       list.innerHTML = `
@@ -2430,18 +2269,24 @@ function closeLeaderboard() {
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
-  initAuth();
+  runLoadingScreen();
   
+  // Draw pile
   document.getElementById('draw-pile')?.addEventListener('click', handleDrawPile);
+  
+  // UNO button
   document.getElementById('uno-btn')?.addEventListener('click', handleUnoButton);
   
+  // Color picker
   document.querySelectorAll('.color-box-3d').forEach(box => {
     box.addEventListener('click', () => selectWildColor(box.dataset.color));
   });
   
+  // Drawn Card Popup Buttons
   document.getElementById('keep-btn')?.addEventListener('click', handleKeepCard);
   document.getElementById('play-btn')?.addEventListener('click', handlePlayDrawnCard);
   
+  // Drag and drop
   const discardPile = document.getElementById('discard-pile');
   if (discardPile) {
     discardPile.addEventListener('dragover', (e) => {
@@ -2470,6 +2315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
+  // Keyboard shortcuts
   document.addEventListener('keydown', e => {
     if (state.isOver || !state.active) return;
     if (e.key === 'u' || e.key === 'U') handleUnoButton();
@@ -2484,6 +2330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
+  // Chat input
   document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       sendChatMessage();
@@ -2491,14 +2338,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// Handle visibility change
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden && multiplayerState.playerPresenceRef) {
-    multiplayerState.playerPresenceRef.update({
-      lastSeen: firebase.database.ServerValue.TIMESTAMP
-    });
+  if (document.hidden) {
+    if (multiplayerState.playerPresenceRef) {
+      multiplayerState.playerPresenceRef.update({
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
   }
 });
 
+// Handle page unload
 window.addEventListener('beforeunload', () => {
   cleanupLobby();
 });
