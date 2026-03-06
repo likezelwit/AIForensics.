@@ -2608,11 +2608,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Handle page unload
-window.addEventListener('beforeunload', () => {
-  cleanupLobby();
-});
-
 // Handle visibility change
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
