@@ -223,11 +223,12 @@ function showGameMessage(text, duration = 1500) {
 }
 
 function showToast(message, duration = 2500) {
-  let toast = document.getElementById('toast-message');
+  let toast = document.getElementById('toast'); // Disesuaikan dengan HTML ID 'toast'
   if (!toast) {
+    // Fallback jika tidak ada di HTML
     toast = document.createElement('div');
-    toast.id = 'toast-message';
-    toast.className = 'toast-message';
+    toast.id = 'toast';
+    toast.className = 'toast';
     document.body.appendChild(toast);
   }
   toast.textContent = message;
@@ -448,150 +449,69 @@ function renderCard(card, isBack = false) {
   return el;
 }
 
-// ==================== MULTIPLAYER MODE SELECTION ====================
-function selectMultiplayerMode() {
-  // Show mode selection modal
-  let modal = document.getElementById('multiplayer-mode-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'multiplayer-mode-modal';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-      <div class="glass-panel modal-content multiplayer-mode-content">
-        <h3 class="modal-title">Multiplayer Mode</h3>
-        
-        <div class="mode-options">
-          <button class="mode-option-btn" onclick="showCreateLobby()">
-            <div class="mode-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            </div>
-            <div class="mode-info">
-              <div class="mode-title">Create Lobby</div>
-              <div class="mode-desc">Create a private room and invite friends</div>
-            </div>
-          </button>
-          
-          <button class="mode-option-btn" onclick="showJoinLobby()">
-            <div class="mode-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            </div>
-            <div class="mode-info">
-              <div class="mode-title">Join Lobby</div>
-              <div class="mode-desc">Enter a room code to join friends</div>
-            </div>
-          </button>
-          
-          <button class="mode-option-btn quick-match-btn" onclick="startQuickMatch()">
-            <div class="mode-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
-            </div>
-            <div class="mode-info">
-              <div class="mode-title">Quick Match</div>
-              <div class="mode-desc">Auto-match with random players</div>
-            </div>
-          </button>
-        </div>
-        
-        <button class="close-modal-btn" onclick="closeMultiplayerModal()">Cancel</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  } else {
-    modal.classList.add('active');
-  }
+// ==================== MENU & MODAL FUNCTIONS ====================
+// Sinkronisasi dengan fungsi onclick di HTML
+function showMultiplayerOptions() {
+  const modal = document.getElementById('multiplayer-options-modal');
+  if (modal) modal.classList.add('active');
 }
 
-function closeMultiplayerModal() {
-  const modal = document.getElementById('multiplayer-mode-modal');
+function closeMultiplayerOptions() {
+  const modal = document.getElementById('multiplayer-options-modal');
   if (modal) modal.classList.remove('active');
 }
 
-// ==================== CREATE LOBBY ====================
 function showCreateLobby() {
-  closeMultiplayerModal();
-  
-  let modal = document.getElementById('create-lobby-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'create-lobby-modal';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-      <div class="glass-panel modal-content create-lobby-content">
-        <h3 class="modal-title">Create Lobby</h3>
-        
-        <div class="input-group">
-          <label>Your Name</label>
-          <input type="text" id="host-name-input" class="glass-input" placeholder="Enter your name" maxlength="15" value="${multiplayerState.playerName}">
-        </div>
-        
-        <div class="input-group">
-          <label>Game Mode</label>
-          <div class="mode-selector">
-            <button class="mode-select-btn active" data-mode="classic">Classic</button>
-            <button class="mode-select-btn" data-mode="team">2v2</button>
-            <button class="mode-select-btn" data-mode="speed">Speed</button>
-          </div>
-        </div>
-        
-        <div class="input-group">
-          <label>Max Players</label>
-          <div class="player-count-selector">
-            <button class="count-btn" data-count="2">2</button>
-            <button class="count-btn active" data-count="4">4</button>
-          </div>
-        </div>
-        
-        <div class="setting-toggle">
-          <span>Private Room</span>
-          <div class="toggle-switch" id="private-toggle"></div>
-        </div>
-        
-        <button class="create-btn" onclick="createLobby()">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          Create Room
-        </button>
-        
-        <button class="close-modal-btn" onclick="closeCreateLobbyModal()">Cancel</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    
-    // Setup mode buttons
-    modal.querySelectorAll('.mode-select-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        modal.querySelectorAll('.mode-select-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      });
-    });
-    
-    // Setup player count buttons
-    modal.querySelectorAll('.count-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        modal.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      });
-    });
-    
-    // Setup private toggle
-    const privateToggle = modal.querySelector('#private-toggle');
-    privateToggle.addEventListener('click', () => {
-      privateToggle.classList.toggle('active');
-    });
-  } else {
+  closeMultiplayerOptions();
+  const modal = document.getElementById('create-lobby-modal');
+  if (modal) {
     modal.classList.add('active');
-    const nameInput = document.getElementById('host-name-input');
+    // Isi nilai default
+    const nameInput = document.getElementById('host-name');
     if (nameInput) nameInput.value = multiplayerState.playerName;
+    
+    // Setup listener untuk tombol mode/player count jika belum ada
+    setupModalButtons(modal);
   }
 }
 
-function closeCreateLobbyModal() {
+function setupModalButtons(modal) {
+    // Mode Buttons
+    modal.querySelectorAll('.mode-btn').forEach(btn => {
+      if (!btn.dataset.initialized) {
+        btn.addEventListener('click', () => {
+          modal.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        btn.dataset.initialized = "true";
+      }
+    });
+    
+    // Count Buttons
+    modal.querySelectorAll('.count-btn').forEach(btn => {
+      if (!btn.dataset.initialized) {
+        btn.addEventListener('click', () => {
+          modal.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        btn.dataset.initialized = "true";
+      }
+    });
+}
+
+function closeCreateLobby() {
   const modal = document.getElementById('create-lobby-modal');
   if (modal) modal.classList.remove('active');
 }
 
+function togglePrivate() {
+  const toggle = document.getElementById('private-toggle');
+  if (toggle) toggle.classList.toggle('active');
+}
+
 async function createLobby() {
-  const nameInput = document.getElementById('host-name-input');
-  const activeMode = document.querySelector('#create-lobby-modal .mode-select-btn.active');
+  const nameInput = document.getElementById('host-name');
+  const activeMode = document.querySelector('#create-lobby-modal .mode-btn.active');
   const activeCount = document.querySelector('#create-lobby-modal .count-btn.active');
   const privateToggle = document.getElementById('private-toggle');
   
@@ -605,8 +525,8 @@ async function createLobby() {
   const roomCode = generateRoomCode();
   multiplayerState.lobbyId = roomCode;
   
-  closeCreateLobbyModal();
-  showScreen('lobby-screen');
+  closeCreateLobby();
+  showScreen('lobby-room'); // ID HTML: lobby-room
   
   // Create lobby in Firebase
   const lobbyRef = database.ref('lobbies/' + roomCode);
@@ -650,78 +570,26 @@ async function createLobby() {
 
 // ==================== JOIN LOBBY ====================
 function showJoinLobby() {
-  closeMultiplayerModal();
-  
-  let modal = document.getElementById('join-lobby-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'join-lobby-modal';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-      <div class="glass-panel modal-content join-lobby-content">
-        <h3 class="modal-title">Join Lobby</h3>
-        
-        <div class="input-group">
-          <label>Your Name</label>
-          <input type="text" id="join-name-input" class="glass-input" placeholder="Enter your name" maxlength="15" value="${multiplayerState.playerName}">
-        </div>
-        
-        <div class="input-group">
-          <label>Room Code</label>
-          <input type="text" id="room-code-input" class="glass-input" placeholder="UNO-XXXXX" maxlength="9" style="text-transform: uppercase;">
-        </div>
-        
-        <div class="public-lobbies-section">
-          <div class="section-header">
-            <span>Public Lobbies</span>
-            <button class="refresh-btn" onclick="refreshPublicLobbies()">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-            </button>
-          </div>
-          <div class="public-lobbies-list" id="public-lobbies-list">
-            <div class="loading-lobbies">Loading...</div>
-          </div>
-        </div>
-        
-        <button class="join-btn" onclick="joinLobbyByCode()">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          Join Room
-        </button>
-        
-        <button class="close-modal-btn" onclick="closeJoinLobbyModal()">Cancel</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    
-    // Auto-format room code
-    const codeInput = document.getElementById('room-code-input');
-    codeInput?.addEventListener('input', (e) => {
-      let value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-      if (value.length > 4 && !value.includes('-')) {
-        value = value.slice(0, 3) + '-' + value.slice(3);
-      }
-      e.target.value = value;
-    });
-    
-    refreshPublicLobbies();
-  } else {
+  closeMultiplayerOptions();
+  const modal = document.getElementById('join-lobby-modal');
+  if (modal) {
     modal.classList.add('active');
-    const nameInput = document.getElementById('join-name-input');
+    const nameInput = document.getElementById('join-name');
     if (nameInput) nameInput.value = multiplayerState.playerName;
     refreshPublicLobbies();
   }
 }
 
-function closeJoinLobbyModal() {
+function closeJoinLobby() {
   const modal = document.getElementById('join-lobby-modal');
   if (modal) modal.classList.remove('active');
 }
 
 async function refreshPublicLobbies() {
-  const listEl = document.getElementById('public-lobbies-list');
+  const listEl = document.getElementById('public-lobby-list');
   if (!listEl) return;
   
-  listEl.innerHTML = '<div class="loading-lobbies">Searching...</div>';
+  listEl.innerHTML = '<div class="lobby-empty">Searching...</div>';
   
   try {
     const snapshot = await database.ref('lobbies')
@@ -745,29 +613,28 @@ async function refreshPublicLobbies() {
     });
     
     if (lobbies.length === 0) {
-      listEl.innerHTML = '<div class="no-lobbies">No public lobbies available</div>';
+      listEl.innerHTML = '<div class="lobby-empty">No public lobbies available</div>';
       return;
     }
     
     listEl.innerHTML = lobbies.map(lobby => `
       <div class="lobby-item" onclick="joinLobbyById('${lobby.id}')">
-        <div class="lobby-code">${lobby.id}</div>
-        <div class="lobby-info">
-          <div class="lobby-mode">${lobby.gameMode || 'Classic'}</div>
-          <div class="lobby-players">${lobby.playerCount}/${lobby.maxPlayers} players</div>
+        <div class="lobby-item-info">
+          <div class="lobby-item-name">${lobby.id}</div>
+          <div class="lobby-item-host">${lobby.hostName}</div>
         </div>
-        <div class="lobby-host">by ${lobby.hostName}</div>
+        <div class="lobby-item-players">${lobby.playerCount}/${lobby.maxPlayers}</div>
       </div>
     `).join('');
     
   } catch (error) {
     console.error('Error fetching lobbies:', error);
-    listEl.innerHTML = '<div class="no-lobbies">Failed to load lobbies</div>';
+    listEl.innerHTML = '<div class="lobby-empty">Failed to load lobbies</div>';
   }
 }
 
 async function joinLobbyByCode() {
-  const nameInput = document.getElementById('join-name-input');
+  const nameInput = document.getElementById('join-name');
   const codeInput = document.getElementById('room-code-input');
   
   multiplayerState.playerName = nameInput?.value?.trim() || 'Player';
@@ -786,8 +653,8 @@ async function joinLobbyById(lobbyId) {
   multiplayerState.lobbyId = lobbyId;
   multiplayerState.isHost = false;
   
-  closeJoinLobbyModal();
-  showScreen('lobby-screen');
+  closeJoinLobby();
+  showScreen('lobby-room'); // ID HTML: lobby-room
   
   const lobbyRef = database.ref('lobbies/' + lobbyId);
   multiplayerState.lobbyRef = lobbyRef;
@@ -849,48 +716,12 @@ async function joinLobbyById(lobbyId) {
 }
 
 // ==================== QUICK MATCH ====================
-async function startQuickMatch() {
-  closeMultiplayerModal();
-  
-  // Ask for name
-  let modal = document.getElementById('quick-match-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'quick-match-modal';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-      <div class="glass-panel modal-content quick-match-content">
-        <h3 class="modal-title">Quick Match</h3>
-        
-        <div class="input-group">
-          <label>Your Name</label>
-          <input type="text" id="quick-name-input" class="glass-input" placeholder="Enter your name" maxlength="15" value="${multiplayerState.playerName}">
-        </div>
-        
-        <div class="quick-match-options">
-          <p>Searching for available lobbies...</p>
-          <p class="sub-text">Or create a new one if none found</p>
-        </div>
-        
-        <button class="quick-match-btn searching" onclick="performQuickMatch()">
-          <div class="spinner"></div>
-          Finding Match...
-        </button>
-        
-        <button class="close-modal-btn" onclick="cancelQuickMatch()">Cancel</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  } else {
-    modal.classList.add('active');
-  }
-  
-  await performQuickMatch();
+function startQuickMatch() {
+  showScreen('quick-match-screen');
+  performQuickMatch();
 }
 
 async function performQuickMatch() {
-  const nameInput = document.getElementById('quick-name-input');
-  multiplayerState.playerName = nameInput?.value?.trim() || 'Player';
   multiplayerState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   multiplayerState.isQuickMatch = true;
   
@@ -914,29 +745,30 @@ async function performQuickMatch() {
     });
     
     if (foundLobby) {
-      // Join existing lobby
-      closeQuickMatchModal();
       await joinLobbyById(foundLobby.id);
     } else {
-      // Create new quick match lobby
-      closeQuickMatchModal();
       await createQuickMatchLobby();
     }
     
   } catch (error) {
     console.error('Quick match error:', error);
     showToast('Failed to find match. Please try again.');
-    closeQuickMatchModal();
+    showScreen('menu-screen');
   }
+}
+
+function cancelQuickMatch() {
+  showScreen('menu-screen');
 }
 
 async function createQuickMatchLobby() {
   multiplayerState.isHost = true;
+  multiplayerState.playerName = 'Player_' + Math.random().toString(36).substr(2, 4); // Quick name
   
   const roomCode = generateRoomCode();
   multiplayerState.lobbyId = roomCode;
   
-  showScreen('lobby-screen');
+  showScreen('lobby-room');
   
   const lobbyRef = database.ref('lobbies/' + roomCode);
   multiplayerState.lobbyRef = lobbyRef;
@@ -970,7 +802,6 @@ async function createQuickMatchLobby() {
     setupLobbyListeners();
     setupPresence();
     playSound('join');
-    showToast('Waiting for players...');
   } catch (error) {
     console.error('Error creating quick match:', error);
     showToast('Failed to create match');
@@ -978,66 +809,21 @@ async function createQuickMatchLobby() {
   }
 }
 
-function cancelQuickMatch() {
-  closeQuickMatchModal();
-}
-
-function closeQuickMatchModal() {
-  const modal = document.getElementById('quick-match-modal');
-  if (modal) modal.classList.remove('active');
-}
-
 // ==================== LOBBY UI ====================
 function updateLobbyUI() {
-  let lobbyScreen = document.getElementById('lobby-screen');
-  if (!lobbyScreen) {
-    lobbyScreen = document.createElement('div');
-    lobbyScreen.id = 'lobby-screen';
-    lobbyScreen.className = 'screen';
-    lobbyScreen.innerHTML = `
-      <div class="lobby-header">
-        <div class="lobby-title">Game Lobby</div>
-        <div class="lobby-code-display">
-          <span class="code-label">Room Code:</span>
-          <span class="code-value" id="lobby-code-value">UNO-XXXXX</span>
-          <button class="copy-btn" onclick="copyLobbyCode()">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-          </button>
-        </div>
-      </div>
-      
-      <div class="lobby-info-bar">
-        <div class="game-mode-display" id="game-mode-display">Classic Mode</div>
-        <div class="player-count-display" id="player-count-display">1/4 Players</div>
-      </div>
-      
-      <div class="lobby-players-grid" id="lobby-players-grid">
-        <!-- Players will be rendered here -->
-      </div>
-      
-      <div class="lobby-chat" id="lobby-chat">
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-input-area">
-          <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." maxlength="100">
-          <button class="chat-send-btn" onclick="sendChatMessage()">Send</button>
-        </div>
-      </div>
-      
-      <div class="lobby-actions">
-        <button class="ready-btn" id="ready-btn" onclick="toggleReady()">Ready</button>
-        <button class="start-btn" id="start-btn" onclick="startMultiplayerGame()" disabled>Start Game</button>
-        <button class="leave-btn" onclick="leaveLobby()">Leave</button>
-      </div>
-    `;
-    document.body.appendChild(lobbyScreen);
-  }
-  
-  // Update code display
-  const codeEl = document.getElementById('lobby-code-value');
+  // Update Room Code
+  const codeEl = document.getElementById('display-room-code');
   if (codeEl) codeEl.textContent = multiplayerState.lobbyId;
+  
+  const codeEl2 = document.getElementById('room-code-mini');
+  if (codeEl2) codeEl2.textContent = multiplayerState.lobbyId;
+
+  // Update Mode & Player Count
+  const modeEl = document.getElementById('lobby-mode-display');
+  if (modeEl) modeEl.textContent = multiplayerState.gameMode.charAt(0).toUpperCase() + multiplayerState.gameMode.slice(1) + " Mode";
 }
 
-function copyLobbyCode() {
+function copyRoomCode() {
   navigator.clipboard.writeText(multiplayerState.lobbyId).then(() => {
     showToast('Room code copied!');
     playSound('card');
@@ -1061,29 +847,28 @@ function renderLobbyPlayers(players, playerOrder) {
     
     if (player) {
       const isYou = playerId === multiplayerState.playerId;
-      const statusClass = player.isReady ? 'ready' : 'not-ready';
+      // Sesuaikan class dengan CSS
+      let slotClass = "lobby-player-slot filled";
+      if (player.isHost) slotClass += " host";
+      if (isYou) slotClass += " you";
       
       html += `
-        <div class="lobby-player-slot ${statusClass} ${isYou ? 'you' : ''}">
-          <div class="player-avatar-large" style="background: ${getPlayerColor(i)}">
-            ${player.isBot ? '🤖' : '👤'}
+        <div class="${slotClass}">
+          <div class="slot-avatar">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
           </div>
-          <div class="player-slot-name">${player.name}${isYou ? ' (You)' : ''}</div>
-          ${player.isHost ? '<div class="host-badge">HOST</div>' : ''}
-          <div class="player-status ${player.isReady ? 'ready' : ''}">
-            ${player.isReady ? '✓ Ready' : 'Waiting...'}
-          </div>
-          ${isYou ? '' : `<button class="kick-btn" onclick="kickPlayer('${playerId}')" ${!multiplayerState.isHost ? 'disabled' : ''}>✕</button>`}
+          <span class="slot-name">${player.name}</span>
+          ${player.isHost ? '<div class="slot-host-badge">HOST</div>' : ''}
+          <div class="slot-status">${player.isReady ? 'Ready' : 'Waiting...'}</div>
         </div>
       `;
     } else {
       html += `
-        <div class="lobby-player-slot empty">
-          <div class="player-avatar-large empty">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        <div class="lobby-player-slot">
+          <div class="slot-avatar">
+             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
           </div>
-          <div class="player-slot-name">Waiting...</div>
-          <div class="player-status">Empty Slot</div>
+          <span class="slot-name">Waiting...</span>
         </div>
       `;
     }
@@ -1100,7 +885,6 @@ function setupLobbyListeners() {
     const players = snapshot.val();
     if (!players) return;
     
-    // Get player order
     multiplayerState.lobbyRef.child('playerOrder').once('value', (orderSnap) => {
       const playerOrder = orderSnap.val() || Object.keys(players);
       renderLobbyPlayers(players, playerOrder);
@@ -1109,7 +893,6 @@ function setupLobbyListeners() {
     });
   });
   
-  // Listen for player order changes
   multiplayerState.lobbyRef.child('playerOrder').on('value', (snapshot) => {
     const playerOrder = snapshot.val();
     multiplayerState.lobbyRef.child('players').once('value', (playersSnap) => {
@@ -1121,7 +904,6 @@ function setupLobbyListeners() {
     });
   });
   
-  // Listen for game start
   multiplayerState.lobbyRef.child('status').on('value', (snapshot) => {
     const status = snapshot.val();
     if (status === 'playing') {
@@ -1129,7 +911,6 @@ function setupLobbyListeners() {
     }
   });
   
-  // Listen for lobby deletion
   multiplayerState.lobbyRef.on('value', (snapshot) => {
     if (!snapshot.exists()) {
       showToast('Lobby has been closed');
@@ -1137,7 +918,7 @@ function setupLobbyListeners() {
     }
   });
   
-  // Listen for chat messages
+  // Chat Listener
   multiplayerState.lobbyRef.child('chat').limitToLast(50).on('child_added', (snapshot) => {
     const msg = snapshot.val();
     if (msg) displayChatMessage(msg);
@@ -1145,39 +926,24 @@ function setupLobbyListeners() {
 }
 
 function updateStartButton(players, playerOrder) {
-  const startBtn = document.getElementById('start-btn');
-  const readyBtn = document.getElementById('ready-btn');
-  
-  if (!startBtn || !readyBtn) return;
+  const startBtn = document.getElementById('start-game-btn');
+  if (!startBtn) return;
   
   const playerCount = playerOrder ? playerOrder.length : Object.keys(players).length;
   const allReady = Object.values(players).every(p => p.isReady || p.isBot);
   const minPlayers = multiplayerState.gameMode === 'team' ? 4 : 2;
   
   const canStart = multiplayerState.isHost && playerCount >= minPlayers && allReady;
-  
   startBtn.disabled = !canStart;
-  
-  // Update ready button for current player
-  const myPlayer = players[multiplayerState.playerId];
-  if (myPlayer) {
-    readyBtn.textContent = myPlayer.isReady ? 'Not Ready' : 'Ready';
-    readyBtn.className = 'ready-btn ' + (myPlayer.isReady ? 'ready' : '');
-  }
-  
-  // Disable ready button for host when they're the only one
-  if (multiplayerState.isHost && playerCount === 1) {
-    readyBtn.textContent = 'Ready';
-    readyBtn.className = 'ready-btn ready';
-  }
 }
 
 function updatePlayerCountDisplay(players, playerOrder) {
-  const display = document.getElementById('player-count-display');
-  if (!display) return;
-  
+  const countEl = document.getElementById('lobby-player-count');
+  const maxEl = document.getElementById('lobby-max-players');
   const count = playerOrder ? playerOrder.length : Object.keys(players).length;
-  display.textContent = `${count}/${multiplayerState.maxPlayers} Players`;
+  
+  if (countEl) countEl.textContent = count;
+  if (maxEl) maxEl.textContent = multiplayerState.maxPlayers;
 }
 
 async function toggleReady() {
@@ -1193,25 +959,6 @@ async function toggleReady() {
   }
 }
 
-async function kickPlayer(playerId) {
-  if (!multiplayerState.isHost || !multiplayerState.lobbyRef) return;
-  
-  const snapshot = await multiplayerState.lobbyRef.once('value');
-  const lobbyData = snapshot.val();
-  
-  if (!lobbyData) return;
-  
-  const newOrder = (lobbyData.playerOrder || []).filter(id => id !== playerId);
-  
-  const updates = {};
-  updates['/players/' + playerId] = null;
-  updates['/playerOrder'] = newOrder;
-  
-  await multiplayerState.lobbyRef.update(updates);
-  playSound('card');
-  showToast('Player kicked');
-}
-
 async function leaveLobby() {
   cleanupLobby();
   showScreen('menu-screen');
@@ -1219,21 +966,16 @@ async function leaveLobby() {
 
 function cleanupLobby() {
   if (multiplayerState.lobbyRef && multiplayerState.playerId) {
-    // Remove player from lobby
     multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId).remove();
     
-    // Update player order
     multiplayerState.lobbyRef.child('playerOrder').once('value', (snapshot) => {
       const order = snapshot.val() || [];
       const newOrder = order.filter(id => id !== multiplayerState.playerId);
       
       if (newOrder.length === 0) {
-        // Delete lobby if empty
         multiplayerState.lobbyRef.remove();
       } else {
         multiplayerState.lobbyRef.child('playerOrder').set(newOrder);
-        
-        // Transfer host if needed
         if (multiplayerState.isHost) {
           const newHostId = newOrder[0];
           multiplayerState.lobbyRef.child('hostId').set(newHostId);
@@ -1241,18 +983,14 @@ function cleanupLobby() {
         }
       }
     });
-    
-    // Remove listeners
     multiplayerState.lobbyRef.off();
   }
   
-  // Clear presence
   if (multiplayerState.playerPresenceRef) {
     multiplayerState.playerPresenceRef.remove();
     multiplayerState.playerPresenceRef.off();
   }
   
-  // Reset state
   multiplayerState.lobbyRef = null;
   multiplayerState.lobbyId = null;
   multiplayerState.isHost = false;
@@ -1265,10 +1003,12 @@ function displayChatMessage(msg) {
   if (!container) return;
   
   const msgEl = document.createElement('div');
-  msgEl.className = 'chat-message' + (msg.playerId === multiplayerState.playerId ? ' own' : '');
+  msgEl.className = 'chat-message';
+  if (msg.playerId === multiplayerState.playerId) msgEl.classList.add('own');
+  
   msgEl.innerHTML = `
-    <span class="chat-sender" style="color: ${getPlayerColor(msg.playerIndex || 0)}">${msg.sender}:</span>
-    <span class="chat-text">${msg.text}</span>
+    <span class="chat-message-sender" style="color: ${getPlayerColor(msg.playerIndex || 0)}">${msg.sender}:</span>
+    <span class="chat-message-text">${msg.text}</span>
   `;
   container.appendChild(msgEl);
   container.scrollTop = container.scrollHeight;
@@ -1300,26 +1040,22 @@ function setupPresence() {
   const presenceRef = database.ref('presence/' + multiplayerState.lobbyId + '/' + multiplayerState.playerId);
   multiplayerState.playerPresenceRef = presenceRef;
   
-  // Set presence
   presenceRef.set({
     online: true,
     lastSeen: firebase.database.ServerValue.TIMESTAMP,
     playerName: multiplayerState.playerName
   });
   
-  // Remove on disconnect
   presenceRef.onDisconnect().update({
     online: false,
     lastSeen: firebase.database.ServerValue.TIMESTAMP
   });
   
-  // Update lobby player connection status
   if (multiplayerState.lobbyRef) {
     multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId + '/isConnected').set(true);
     multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId + '/isConnected').onDisconnect().set(false);
   }
   
-  // Listen for other players' presence
   const lobbyPresenceRef = database.ref('presence/' + multiplayerState.lobbyId);
   lobbyPresenceRef.on('value', (snapshot) => {
     handlePresenceChanges(snapshot.val());
@@ -1334,7 +1070,6 @@ function handlePresenceChanges(presenceData) {
     const playerIndex = state.players.findIndex(p => p.id === playerId);
     
     if (playerIndex !== -1 && !presence.online) {
-      // Player disconnected - replace with bot
       handlePlayerDisconnect(playerId, playerIndex);
     }
   });
@@ -1346,7 +1081,6 @@ function handlePlayerDisconnect(playerId, playerIndex) {
   const player = state.players[playerIndex];
   if (!player) return;
   
-  // Mark player as disconnected and convert to bot
   player.isBot = true;
   player.isConnected = false;
   player.botReason = 'disconnected';
@@ -1355,7 +1089,6 @@ function handlePlayerDisconnect(playerId, playerIndex) {
   updateUI();
   updatePlayerZones();
   
-  // If it's this player's turn, let bot take over
   if (state.turn === playerIndex) {
     setTimeout(botTurn, 1000);
   }
@@ -1388,14 +1121,12 @@ function updateActivity() {
 function handleAfkTimeout() {
   showGameMessage('You are AFK! Bot taking over...');
   
-  // Convert current player to bot
   const player = state.players[multiplayerState.playerIndex];
   if (player) {
     player.isBot = true;
     player.botReason = 'afk';
   }
   
-  // Let bot play
   if (state.turn === multiplayerState.playerIndex) {
     botTurn();
   }
@@ -1420,11 +1151,9 @@ async function startMultiplayerGame() {
     return;
   }
   
-  // Create game data
   const deck = createDeck();
   const startCard = deck.pop();
   
-  // Deal cards
   const playerHands = {};
   lobbyData.playerOrder.forEach(playerId => {
     playerHands[playerId] = [];
@@ -1450,10 +1179,7 @@ async function startMultiplayerGame() {
     lastAction: null
   };
   
-  // Update lobby status
   await multiplayerState.lobbyRef.update({ status: 'playing' });
-  
-  // Create game state
   await multiplayerState.lobbyRef.child('game').set(gameData);
   
   playSound('start');
@@ -1463,14 +1189,11 @@ function startGameFromLobby() {
   showScreen('game-app');
   initAudio();
   
-  // Setup game listener
   multiplayerState.gameRef = multiplayerState.lobbyRef.child('game');
   setupGameListeners();
   
-  // Start AFK detection
   startAfkTimer();
   
-  // Track activity
   document.addEventListener('click', updateActivity);
   document.addEventListener('keydown', updateActivity);
   document.addEventListener('touchstart', updateActivity);
@@ -1480,7 +1203,6 @@ function startGameFromLobby() {
 function setupGameListeners() {
   if (!multiplayerState.gameRef) return;
   
-  // Listen for game state changes
   multiplayerState.gameRef.on('value', (snapshot) => {
     const gameData = snapshot.val();
     if (!gameData) return;
@@ -1488,7 +1210,6 @@ function setupGameListeners() {
     syncGameState(gameData);
   });
   
-  // Listen for specific actions
   multiplayerState.gameRef.child('lastAction').on('value', (snapshot) => {
     const action = snapshot.val();
     if (action && action.timestamp > Date.now() - 5000) {
@@ -1503,7 +1224,6 @@ function syncGameState(gameData) {
   
   multiplayerState.playerIndex = myIndex;
   
-  // Build players array
   state.players = playerOrder.map((playerId, idx) => {
     const pData = gameData.playerData[playerId];
     const hand = gameData.playerHands[playerId] || [];
@@ -1528,12 +1248,10 @@ function syncGameState(gameData) {
   state.active = true;
   state.isOver = false;
   
-  // Update UI
   renderHand();
   updateUI();
   updatePlayerZones();
   
-  // Check if it's our turn
   if (state.turn === myIndex && !state.players[myIndex].isBot) {
     startTimer();
     vibrate(100);
@@ -1634,7 +1352,6 @@ async function playCard(playerIndex, cardIndex) {
   const card = player.hand.splice(cardIndex, 1)[0];
   state.discard.push(card);
   
-  // Update stack
   if (gameSettings.stacking) {
     if (card.v === '+2') {
       state.drawStack += 2;
@@ -1648,7 +1365,6 @@ async function playCard(playerIndex, cardIndex) {
     }
   }
   
-  // Handle wild cards
   if (card.c === 'black') {
     if (playerIndex === multiplayerState.playerIndex) {
       state.pendingWild = card;
@@ -1660,27 +1376,20 @@ async function playCard(playerIndex, cardIndex) {
     state.activeColor = card.c;
   }
   
-  // Check win
   if (player.hand.length === 0) {
     await endMultiplayerGame(playerIndex);
     return;
   }
   
-  // Check UNO
   if (player.hand.length === 1) {
     state.saidUno.add(playerIndex);
   }
   
-  // Apply card effect
   await applyCardEffect(card, playerIndex);
-  
-  // Advance turn
   await advanceTurn();
   
-  // Send action to other players
   await sendGameAction('playCard', { card: card, cardIndex: cardIndex });
   
-  // Play effects
   if (card.v === 'S') {
     playSound('skip');
     showActionFlash('skip');
@@ -1743,7 +1452,6 @@ function getNextPlayerIndex() {
 async function advanceTurn() {
   state.turn = getNextPlayerIndex();
   
-  // Sync to Firebase
   if (multiplayerState.gameRef) {
     const updates = {
       turn: state.turn,
@@ -1807,7 +1515,6 @@ async function botTurn() {
   });
   
   if (validMoves.length > 0) {
-    // Prioritize action cards
     validMoves.sort((a, b) => getCardPriority(b.card) - getCardPriority(a.card));
     
     await sleep(300 + Math.random() * 400);
@@ -1815,7 +1522,7 @@ async function botTurn() {
   } else {
     const drawn = drawCards(1);
     if (drawn.length > 0) {
-      player.hand.push(...drawn[0]);
+      player.hand.push(drawn[0]);
       showGameMessage(player.name + ' drew a card');
       playSound('draw');
       
@@ -1884,7 +1591,6 @@ async function handleTimeout() {
   showGameMessage('Time Out!');
   vibrate([100, 50, 100]);
   
-  // Auto-draw if needed
   if (state.drawStack > 0) {
     const drawn = drawCards(state.drawStack);
     state.players[multiplayerState.playerIndex].hand.push(...drawn);
@@ -2124,7 +1830,6 @@ async function selectWildColor(color) {
   state.activeColor = color;
   hideColorPicker3D();
   
-  // Sync to Firebase
   if (multiplayerState.gameRef) {
     await multiplayerState.gameRef.update({ activeColor: color });
   }
@@ -2189,40 +1894,20 @@ async function handleDrawPile() {
 }
 
 function showDrawnCardPopup(card, canPlay) {
-  let popup = document.getElementById('drawn-card-popup');
-  if (!popup) {
-    popup = document.createElement('div');
-    popup.id = 'drawn-card-popup';
-    popup.className = 'drawn-card-popup';
-    popup.innerHTML = `
-      <div class="drawn-card-content glass-panel">
-        <h3 class="drawn-card-title">Card Drawn</h3>
-        <div class="drawn-card-display" id="drawn-card-display"></div>
-        <div class="drawn-card-buttons">
-          <button class="drawn-btn keep-btn" id="keep-btn">Keep</button>
-          <button class="drawn-btn play-btn" id="play-btn">Play</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(popup);
-    
-    document.getElementById('keep-btn')?.addEventListener('click', handleKeepCard);
-    document.getElementById('play-btn')?.addEventListener('click', handlePlayDrawnCard);
-  }
-  
+  const popup = document.getElementById('drawn-card-popup');
   const display = document.getElementById('drawn-card-display');
   const playBtn = document.getElementById('play-btn');
   
-  if (display) {
+  if (popup && display) {
     display.innerHTML = '';
     display.appendChild(renderCard(card));
+    
+    if (playBtn) playBtn.style.display = canPlay ? 'block' : 'none';
+    
+    popup.classList.add('active');
+    state.drawnCard = card;
+    state.drawnCardPlayable = canPlay;
   }
-  
-  if (playBtn) playBtn.style.display = canPlay ? 'block' : 'none';
-  
-  popup.classList.add('active');
-  state.drawnCard = card;
-  state.drawnCardPlayable = canPlay;
 }
 
 function hideDrawnCardPopup() {
@@ -2264,7 +1949,7 @@ async function handleUnoButton() {
 }
 
 // ==================== EMOTE SYSTEM ====================
-function showEmotePanel() {
+function toggleEmotePanel(playerIndex) {
   const panel = document.getElementById('emote-panel');
   if (panel) panel.classList.toggle('active');
 }
@@ -2304,20 +1989,15 @@ function showEmote(playerIndex, emote) {
 // ==================== EFFECTS ====================
 function showActionFlash(type) {
   let overlay = document.getElementById('action-flash-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'action-flash-overlay';
-    overlay.className = 'action-flash-overlay';
-    document.body.appendChild(overlay);
+  if (overlay) {
+    overlay.className = 'action-flash-overlay ' + type;
+    void overlay.offsetWidth;
+    overlay.classList.add('active');
+    
+    setTimeout(() => {
+      overlay.classList.remove('active');
+    }, 500);
   }
-  
-  overlay.className = 'action-flash-overlay ' + type;
-  void overlay.offsetWidth;
-  overlay.classList.add('active');
-  
-  setTimeout(() => {
-    overlay.classList.remove('active');
-  }, 500);
 }
 
 function showSkipSymbol(playerIndex) {
@@ -2398,7 +2078,6 @@ async function endMultiplayerGame(winnerIndex) {
   
   const isWin = winnerIndex === multiplayerState.playerIndex;
   
-  // Update lobby status
   if (multiplayerState.lobbyRef) {
     await multiplayerState.lobbyRef.update({ status: 'finished' });
   }
@@ -2416,41 +2095,21 @@ async function endMultiplayerGame(winnerIndex) {
 }
 
 function showGameResults(winnerIndex, isWin) {
-  let modal = document.getElementById('game-over');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'game-over';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-      <div class="glass-panel modal-content game-over-content">
-        <div class="result-icon" id="result-icon"></div>
-        <h2 id="winner-text" class="modal-title">GAME OVER</h2>
-        <div class="results-list" id="results-list"></div>
-        <div class="xp-gained glass-panel" id="xp-gained">
-          <div class="xp-label">XP Gained</div>
-          <div class="xp-value" id="xp-value">+250</div>
-        </div>
-        <div class="game-over-buttons">
-          <button class="menu-btn primary" onclick="rematch()">Rematch</button>
-          <button class="menu-btn secondary glass-panel" onclick="backToLobby()">Back to Lobby</button>
-          <button class="menu-btn secondary glass-panel" onclick="backToMenu()">Main Menu</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  } else {
-    modal.classList.add('active');
-  }
+  const modal = document.getElementById('game-over');
+  if (!modal) return;
+  
+  modal.classList.add('active');
   
   const resultIcon = document.getElementById('result-icon');
   const winnerText = document.getElementById('winner-text');
-  const resultsList = document.getElementById('results-list');
+  const resultsList = document.getElementById('results-container');
   const xpValue = document.getElementById('xp-value');
   
   if (resultIcon) {
+    resultIcon.className = 'result-icon ' + (isWin ? 'win' : 'lose');
     resultIcon.innerHTML = isWin 
-      ? '<div class="result-icon win"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>'
-      : '<div class="result-icon lose"><svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg></div>';
+      ? '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>';
   }
   
   if (winnerText) {
@@ -2481,12 +2140,7 @@ function showGameResults(winnerIndex, isWin) {
 
 function createConfetti() {
   let container = document.getElementById('confetti-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'confetti-container';
-    container.className = 'confetti-container';
-    document.body.appendChild(container);
-  }
+  if (!container) return;
   
   const colors = ['#FF3B5C', '#4DABF7', '#51CF66', '#FFD43B', '#a55eea'];
   
@@ -2513,7 +2167,7 @@ async function rematch() {
     await multiplayerState.lobbyRef?.update({ status: 'waiting' });
   }
   
-  showScreen('lobby-screen');
+  showScreen('lobby-room');
   updateLobbyUI();
 }
 
@@ -2521,7 +2175,7 @@ async function backToLobby() {
   const modal = document.getElementById('game-over');
   if (modal) modal.classList.remove('active');
   
-  showScreen('lobby-screen');
+  showScreen('lobby-room');
   updateLobbyUI();
 }
 
@@ -2533,17 +2187,55 @@ function backToMenu() {
   showScreen('menu-screen');
 }
 
+// ==================== SETTINGS & LEADERBOARD ====================
+function showSettings() {
+  const modal = document.getElementById('settings-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeSettings() {
+  const modal = document.getElementById('settings-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function toggleSetting(setting) {
+  gameSettings[setting] = !gameSettings[setting];
+  const toggle = document.getElementById('toggle-' + setting);
+  if (toggle) toggle.classList.toggle('active', gameSettings[setting]);
+}
+
+function showLeaderboard() {
+  const modal = document.getElementById('leaderboard-modal');
+  if (modal) {
+    modal.classList.add('active');
+    // Load dummy leaderboard for now
+    const list = document.getElementById('leaderboard-list');
+    if (list) {
+      list.innerHTML = `
+        <div class="leaderboard-item current-player">
+          <div class="leaderboard-rank">1</div>
+          <div class="leaderboard-name">You</div>
+          <div class="leaderboard-score">2,450</div>
+        </div>
+        <div class="leaderboard-item">
+          <div class="leaderboard-rank">2</div>
+          <div class="leaderboard-name">Bot Alex</div>
+          <div class="leaderboard-score">2,100</div>
+        </div>
+      `;
+    }
+  }
+}
+
+function closeLeaderboard() {
+  const modal = document.getElementById('leaderboard-modal');
+  if (modal) modal.classList.remove('active');
+}
+
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
   runLoadingScreen();
-  
-  // Mode selection buttons
-  document.querySelectorAll('.theme-card').forEach(card => {
-    if (card.dataset.mode === 'solo') {
-      card.addEventListener('click', () => selectMultiplayerMode());
-    }
-  });
   
   // Draw pile
   document.getElementById('draw-pile')?.addEventListener('click', handleDrawPile);
@@ -2555,6 +2247,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.color-box-3d').forEach(box => {
     box.addEventListener('click', () => selectWildColor(box.dataset.color));
   });
+  
+  // Drawn Card Popup Buttons
+  document.getElementById('keep-btn')?.addEventListener('click', handleKeepCard);
+  document.getElementById('play-btn')?.addEventListener('click', handlePlayDrawnCard);
   
   // Drag and drop
   const discardPile = document.getElementById('discard-pile');
@@ -2608,19 +2304,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Handle page unload
-window.addEventListener('beforeunload', () => {
-  cleanupLobby();
-});
-
 // Handle visibility change
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    // Page is hidden, update presence
     if (multiplayerState.playerPresenceRef) {
       multiplayerState.playerPresenceRef.update({
         lastSeen: firebase.database.ServerValue.TIMESTAMP
       });
     }
   }
+});
+
+// Handle page unload
+window.addEventListener('beforeunload', () => {
+  cleanupLobby();
 });
