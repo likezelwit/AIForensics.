@@ -22,6 +22,7 @@ const BOT_NAMES = ['Alex', 'Blake', 'Casey', 'Drew', 'Ellis', 'Flynn'];
 const TURN_TIME = 15;
 const GAME_TIME = 300;
 const AFK_TIMEOUT = 30000;
+const RECONNECT_TIMEOUT = 60000;
 const EMOTES = {
   angry: '😠', laugh: '😂', cry: '😢', fire: '🔥', cool: '😎', think: '🤔'
 };
@@ -31,6 +32,15 @@ const gameSettings = {
   stacking: true,
   timer: true,
   sound: true
+};
+
+// Player Stats
+const playerStats = {
+  name: 'Player',
+  level: 12,
+  xp: 2450,
+  xpNeeded: 3000,
+  coins: 1250
 };
 
 // Game State
@@ -55,15 +65,17 @@ let state = {
   sortMode: null,
   dragCard: null,
   drawnCard: null,
-  drawnCardPlayable: false
+  drawnCardPlayable: false,
+  comboCount: 0,
+  lastPlayTime: 0
 };
 
 // Multiplayer State
 let multiplayerState = {
   isHost: false,
   lobbyId: null,
-  playerId: 'player_' + Math.random().toString(36).substr(2, 9),
-  playerName: 'Player',
+  playerId: null,
+  playerName: 'Player_' + Math.random().toString(36).substr(2, 6),
   playerIndex: 0,
   maxPlayers: 4,
   gameMode: 'classic',
@@ -74,15 +86,25 @@ let multiplayerState = {
   presenceRef: null,
   playerPresenceRef: null,
   lastActivity: Date.now(),
-  afkTimer: null
+  afkTimer: null,
+  reconnectTimer: null,
+  playerPositions: {},
+  isSearching: false,
+  searchRef: null,
+  callbacks: {}
 };
 
+// Audio Context
 let audioCtx = null;
 
 // ==================== INITIALIZATION ====================
 function initAudio() {
   if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      console.log('Audio not supported');
+    }
   }
 }
 
@@ -91,7 +113,8 @@ function playSound(type) {
   try {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    osc.connect(g); g.connect(audioCtx.destination);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
     const t = audioCtx.currentTime;
     
     const sounds = {
@@ -99,11 +122,14 @@ function playSound(type) {
       win: { type: 'sine', freq: [523, 659, 784, 1047], dur: 0.8, vol: 0.1 },
       lose: { type: 'sawtooth', freq: [200, 100], dur: 0.5, vol: 0.06 },
       draw: { type: 'sine', freq: [500, 400], dur: 0.08, vol: 0.05 },
-      tick: { type: 'sine', freq: [900], dur: 0.06, vol: 0.04 },
-      skip: { type: 'square', freq: [350, 450], dur: 0.35, vol: 0.06 },
-      reverse: { type: 'sine', freq: [450, 550], dur: 0.3, vol: 0.06 },
-      wild: { type: 'sine', freq: [350, 500, 700], dur: 0.5, vol: 0.08 },
+      tick: { type: 'sine', freq: [900, 900], dur: 0.06, vol: 0.04 },
+      deal: { type: 'triangle', freq: [600, 700], dur: 0.08, vol: 0.05 },
+      skip: { type: 'square', freq: [350, 450, 350], dur: 0.35, vol: 0.06 },
+      reverse: { type: 'sine', freq: [450, 550, 450], dur: 0.3, vol: 0.06 },
+      wild: { type: 'sine', freq: [350, 500, 700, 900], dur: 0.5, vol: 0.08 },
+      combo: { type: 'sine', freq: [700, 900, 1100], dur: 0.25, vol: 0.06 },
       uno: { type: 'sine', freq: [523, 659, 784], dur: 0.6, vol: 0.1 },
+      emote: { type: 'sine', freq: [600, 800], dur: 0.15, vol: 0.05 },
       join: { type: 'sine', freq: [400, 600, 800], dur: 0.3, vol: 0.08 },
       start: { type: 'sine', freq: [600, 800, 1000], dur: 0.4, vol: 0.1 }
     };
@@ -112,18 +138,19 @@ function playSound(type) {
     if (!s) return;
 
     osc.type = s.type;
-    if (Array.isArray(s.freq)) {
+    if (Array.isArray(s.freq) && s.freq.length > 1) {
       const noteLength = s.dur / s.freq.length;
       s.freq.forEach((f, i) => {
-        osc.frequency.setValueAtTime(Math.max(1, f), t + (i * noteLength));
+        const startTime = t + (i * noteLength);
+        osc.frequency.setValueAtTime(Math.max(1, f), startTime);
+        if (i < s.freq.length - 1) osc.frequency.exponentialRampToValueAtTime(Math.max(1, s.freq[i + 1]), startTime + noteLength);
       });
     } else {
-      osc.frequency.setValueAtTime(s.freq, t);
+      osc.frequency.setValueAtTime(Array.isArray(s.freq) ? s.freq[0] : s.freq, t);
     }
     
     g.gain.setValueAtTime(s.vol, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + s.dur);
-    
     osc.start(t);
     osc.stop(t + s.dur);
   } catch (e) {}
@@ -159,10 +186,10 @@ function getPlayerColor(idx) {
 function getPositionClass(idx, totalPlayers) {
   if (totalPlayers === 2) return idx === 0 ? 'bottom' : 'top';
   if (totalPlayers === 3) {
-    const positions = ['bottom', 'right', 'left']; // P1, P2(bot), P3(bot) mapping for 3 players
+    const positions = ['bottom', 'right', 'left']; // Bottom (You), Right (P2), Left (P3) for 3 players
     return positions[idx];
   }
-  return ['bottom', 'left', 'top', 'right'][idx];
+  return ['bottom', 'left', 'top', 'right'][idx]; // Standard 4 player
 }
 
 function showScreen(screenId) {
@@ -180,13 +207,8 @@ function showGameMessage(text, duration = 1500) {
 }
 
 function showToast(message, duration = 2500) {
-  let toast = document.getElementById('toast-message');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'toast-message';
-    toast.className = 'toast'; // Uses CSS class from provided CSS
-    document.body.appendChild(toast);
-  }
+  let toast = document.getElementById('toast');
+  if (!toast) return; // Should exist in HTML
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), duration);
@@ -197,7 +219,6 @@ function createParticles() {
   const container = document.getElementById('particles');
   if (!container) return;
   const colors = ['#FF3B5C', '#4DABF7', '#51CF66', '#FFD43B', '#a55eea'];
-  
   for (let i = 0; i < 15; i++) {
     const particle = document.createElement('div');
     particle.className = 'particle';
@@ -235,6 +256,7 @@ async function runLoadingScreen() {
   if (loadingScreen) loadingScreen.classList.add('hidden');
   showScreen('menu-screen');
   setupConnectionMonitor();
+  document.getElementById('player-name').textContent = multiplayerState.playerName;
 }
 
 // ==================== CONNECTION STATUS ====================
@@ -251,7 +273,6 @@ function setupConnectionMonitor() {
 function updateConnectionStatus(connected) {
   let statusEl = document.getElementById('connection-status');
   if (!statusEl) return;
-
   if (connected) {
     statusEl.className = 'connection-status connected';
     statusEl.innerHTML = '<div class="connection-dot"></div><span>Connected</span>';
@@ -261,86 +282,157 @@ function updateConnectionStatus(connected) {
   }
 }
 
-// ==================== MENU FUNCTIONS ====================
+// ==================== DECK CREATION ====================
+function createDeck() {
+  let deck = [];
+  COLORS.forEach(color => {
+    deck.push({ c: color, v: '0' });
+    for (let i = 1; i <= 9; i++) {
+      deck.push({ c: color, v: i.toString() });
+      deck.push({ c: color, v: i.toString() });
+    }
+    SPECIAL_VALUES.forEach(value => {
+      deck.push({ c: color, v: value });
+      deck.push({ c: color, v: value });
+    });
+  });
+  for (let i = 0; i < 4; i++) {
+    deck.push({ c: 'black', v: 'W' });
+    deck.push({ c: 'black', v: '+4' });
+  }
+  return shuffle(deck);
+}
+
+// ==================== CARD RENDERING ====================
+function renderCard(card, isBack = false) {
+  const el = document.createElement('div');
+  el.className = 'uno-card';
+
+  if (isBack) {
+    el.classList.add('card-back');
+    const randId = Math.random().toString(36).substr(2, 9);
+    el.innerHTML = `
+      <svg width="240" height="360" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 360">
+         <defs><linearGradient id="unoRedLocal${randId}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF3B5C"/><stop offset="100%" stop-color="#E6194B"/></linearGradient></defs>
+         <g><rect width="240" height="360" rx="18" fill="#1a1a2e"/><rect x="10" y="10" width="220" height="340" rx="12" fill="none" stroke="#ffffff" stroke-width="6"/><ellipse cx="120" cy="180" rx="80" ry="140" fill="url(#unoRedLocal${randId})" transform="rotate(20 120 180)"/><text x="120" y="195" font-family="Bebas Neue, Arial Black, sans-serif" font-size="60" font-weight="900" fill="#FFD43B" text-anchor="middle" dominant-baseline="middle" transform="rotate(-15 120 190)">UNO</text></g>
+        </svg>`;
+    return el;
+  }
+
+  let fill = '';
+  let isWild = false;
+  
+  if (card.c === 'red') fill = 'url(#unoRed)';
+  else if (card.c === 'blue') fill = 'url(#unoBlue)';
+  else if (card.c === 'green') fill = 'url(#unoGreen)';
+  else if (card.c === 'yellow') fill = 'url(#unoYellow)';
+  else {
+    fill = '#1a1a2e';
+    isWild = true;
+  }
+
+  let centerContent = '';
+  let cornerValue = card.v;
+  let centerFontSize = 180;
+
+  if (card.v === 'S') {
+    cornerValue = '⊘'; centerFontSize = 120;
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">${cornerValue}</text><text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">${cornerValue}</text>`;
+  } else if (card.v === 'R') {
+    cornerValue = '⟲'; centerFontSize = 120;
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">${cornerValue}</text><text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">${cornerValue}</text>`;
+  } else if (card.v === '+2') {
+    centerFontSize = 120;
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">+2</text><text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">+2</text>`;
+  } else if (card.v === 'W') {
+    cornerValue = 'W'; centerContent = '';
+  } else if (card.v === '+4') {
+    cornerValue = '+4';
+    centerContent = `<g transform="skewX(-10)"><text stroke-width="10" stroke="#000000" dominant-baseline="middle" text-anchor="middle" fill="#000000" font-weight="900" font-size="100" font-family="Arial Black, sans-serif" y="186" x="152.41306">+4</text><text dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-weight="900" font-size="100" font-family="Arial Black, sans-serif" y="179" x="145.41306">+4</text></g>`;
+  } else {
+    centerContent = `<text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#000000" text-anchor="middle" dominant-baseline="middle" x="128" dy="8">${card.v}</text><text y="196" font-family="Arial Black, sans-serif" font-size="${centerFontSize}" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" x="120">${card.v}</text>`;
+  }
+
+  let wildPattern = '';
+  if (isWild) {
+    wildPattern = `<g transform="rotate(-50 120 180)"><path fill="#4DABF7" d="m120,180l0,-85a145,85 0 0 1 145,85l-145,0z"/><path fill="#51CF66" d="m120,180l145,0a145,85 0 0 1 -145,85l0,-85z"/><path fill="#FFD43B" d="m120,180l0,85a145,85 0 0 1 -145,-85l145,0z"/><path fill="#FF3B5C" d="m120,180l-145,0a145,85 0 0 1 145,-85l0,85z"/><ellipse stroke-width="4" stroke="#ffffff" fill="none" ry="85" rx="145" cy="180" cx="120"/></g>`;
+  }
+
+  let centerEllipse = '';
+  if (!isWild) centerEllipse = `<ellipse transform="rotate(-60.409 117.875 181.408)" stroke="#ffffff" cx="117.87508" cy="181.40815" rx="159.19945" ry="82.07582" fill="none" stroke-width="6"/>`;
+
+  el.innerHTML = `
+    <svg width="240" height="360" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 360">
+     <g><rect x="0" y="0" width="240" height="360" rx="25" ry="25" fill="${fill}"/>
+      <rect x="10" y="10" width="220" height="340" rx="20" ry="20" fill="none" stroke="#ffffff" stroke-width="8"/>
+      ${centerEllipse}${wildPattern}${centerContent}
+      <g><text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#000000" text-anchor="middle" x="44.67969" y="61">${cornerValue}</text><text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#ffffff" text-anchor="middle" y="58" x="41.67969">${cornerValue}</text></g>
+      <g transform="rotate(180 162 238)"><text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#000000" text-anchor="middle" x="45" y="61">${cornerValue}</text><text font-family="Arial Black, sans-serif" font-size="50" font-weight="900" fill="#ffffff" text-anchor="middle" y="58" x="42">${cornerValue}</text></g>
+     </g>
+    </svg>`;
+  return el;
+}
+
+// ==================== MENU & MODAL FUNCTIONS ====================
 function showMultiplayerOptions() {
-  const modal = document.getElementById('multiplayer-options-modal');
-  if (modal) modal.classList.add('active');
-  initAudio();
+  document.getElementById('multiplayer-options-modal').classList.add('active');
 }
 
 function closeMultiplayerOptions() {
-  const modal = document.getElementById('multiplayer-options-modal');
-  if (modal) modal.classList.remove('active');
+  document.getElementById('multiplayer-options-modal').classList.remove('active');
 }
 
 function showSettings() {
-  const modal = document.getElementById('settings-modal');
-  if (modal) modal.classList.add('active');
+  document.getElementById('settings-modal').classList.add('active');
 }
 
 function closeSettings() {
-  const modal = document.getElementById('settings-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function toggleSetting(setting) {
-  gameSettings[setting] = !gameSettings[setting];
-  const toggle = document.getElementById('toggle-' + setting);
-  if (toggle) toggle.classList.toggle('active', gameSettings[setting]);
+  document.getElementById('settings-modal').classList.remove('active');
 }
 
 function showLeaderboard() {
-  const modal = document.getElementById('leaderboard-modal');
-  if (modal) modal.classList.add('active');
-  loadLeaderboard();
-}
-
-function closeLeaderboard() {
-  const modal = document.getElementById('leaderboard-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function loadLeaderboard() {
+  document.getElementById('leaderboard-modal').classList.add('active');
+  // Mock leaderboard data
   const list = document.getElementById('leaderboard-list');
-  if (!list) return;
-  // Mock data for now
   list.innerHTML = [
-    { name: 'Champion', score: 5200 },
-    { name: 'ProPlayer', score: 4800 },
-    { name: 'CardMaster', score: 4100 },
-    { name: multiplayerState.playerName, score: 2450 }
-  ].sort((a, b) => b.score - a.score).map((p, i) => `
+    { rank: 1, name: 'ProGamer', score: 15400 },
+    { rank: 2, name: 'CardMaster', score: 14200 },
+    { rank: 3, name: 'LuckyDraw', score: 12800 },
+    { rank: 4, name: multiplayerState.playerName, score: playerStats.xp }
+  ].map(p => `
     <div class="leaderboard-item ${p.name === multiplayerState.playerName ? 'current-player' : ''}">
-      <div class="leaderboard-rank ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">${i + 1}</div>
+      <div class="leaderboard-rank ${p.rank <= 3 ? ['gold','silver','bronze'][p.rank-1] : ''}">${p.rank}</div>
       <div class="leaderboard-name">${p.name}</div>
-      <div class="leaderboard-score">${p.score} XP</div>
+      <div class="leaderboard-score">${p.score}</div>
     </div>
   `).join('');
 }
 
-// ==================== CREATE LOBBY ====================
-function showCreateLobby() {
-  closeMultiplayerOptions();
-  const modal = document.getElementById('create-lobby-modal');
-  if (modal) modal.classList.add('active');
-  
-  // Attach listeners for mode/count buttons inside the modal
-  document.querySelectorAll('#create-lobby-modal .mode-btn, #create-lobby-modal .count-btn').forEach(btn => {
-    btn.onclick = function() {
-      this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-    };
-  });
+function closeLeaderboard() {
+  document.getElementById('leaderboard-modal').classList.remove('active');
 }
 
-function closeCreateLobby() {
-  const modal = document.getElementById('create-lobby-modal');
-  if (modal) modal.classList.remove('active');
+function toggleSetting(setting) {
+  const toggle = document.getElementById('toggle-' + setting);
+  if (toggle) {
+    gameSettings[setting] = !gameSettings[setting];
+    toggle.classList.toggle('active', gameSettings[setting]);
+  }
 }
 
 function togglePrivate() {
   const toggle = document.getElementById('private-toggle');
   if (toggle) toggle.classList.toggle('active');
+}
+
+// ==================== CREATE LOBBY ====================
+function showCreateLobby() {
+  closeMultiplayerOptions();
+  document.getElementById('create-lobby-modal').classList.add('active');
+}
+
+function closeCreateLobby() {
+  document.getElementById('create-lobby-modal').classList.remove('active');
 }
 
 async function createLobby() {
@@ -354,14 +446,14 @@ async function createLobby() {
   multiplayerState.maxPlayers = parseInt(activeCount?.dataset.count) || 4;
   multiplayerState.isPrivate = privateToggle?.classList.contains('active') || false;
   multiplayerState.isHost = true;
+  multiplayerState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   
   const roomCode = generateRoomCode();
   multiplayerState.lobbyId = roomCode;
   
   closeCreateLobby();
-  showScreen('lobby-room'); // ID from HTML
+  showScreen('lobby-room');
   
-  // Create lobby in Firebase
   const lobbyRef = database.ref('lobbies/' + roomCode);
   multiplayerState.lobbyRef = lobbyRef;
   
@@ -396,7 +488,7 @@ async function createLobby() {
     showToast('Lobby created: ' + roomCode);
   } catch (error) {
     console.error('Error creating lobby:', error);
-    showToast('Failed to create lobby.');
+    showToast('Failed to create lobby');
     showScreen('menu-screen');
   }
 }
@@ -404,27 +496,17 @@ async function createLobby() {
 // ==================== JOIN LOBBY ====================
 function showJoinLobby() {
   closeMultiplayerOptions();
-  const modal = document.getElementById('join-lobby-modal');
-  if (modal) modal.classList.add('active');
+  document.getElementById('join-lobby-modal').classList.add('active');
   refreshPublicLobbies();
 }
 
 function closeJoinLobby() {
-  const modal = document.getElementById('join-lobby-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function pasteCode() {
-  navigator.clipboard.readText().then(text => {
-    const input = document.getElementById('room-code-input');
-    if (input) input.value = text;
-  }).catch(err => showToast('Failed to paste'));
+  document.getElementById('join-lobby-modal').classList.remove('active');
 }
 
 async function refreshPublicLobbies() {
   const listEl = document.getElementById('public-lobby-list');
   if (!listEl) return;
-  
   listEl.innerHTML = '<div class="lobby-empty">Searching...</div>';
   
   try {
@@ -435,7 +517,7 @@ async function refreshPublicLobbies() {
       if (data.status === 'waiting') {
         const playerCount = data.playerOrder ? data.playerOrder.length : 0;
         if (playerCount < data.maxPlayers) {
-          lobbies.push({ id: child.key, ...data, playerCount });
+          lobbies.push({ id: child.key, ...data, playerCount: playerCount });
         }
       }
     });
@@ -449,15 +531,21 @@ async function refreshPublicLobbies() {
       <div class="lobby-item" onclick="joinLobbyById('${lobby.id}')">
         <div class="lobby-item-info">
           <div class="lobby-item-name">${lobby.id}</div>
-          <div class="lobby-item-host">Host: ${lobby.hostName}</div>
+          <div class="lobby-item-host">${lobby.hostName}</div>
         </div>
         <div class="lobby-item-players">${lobby.playerCount}/${lobby.maxPlayers}</div>
       </div>
     `).join('');
-    
   } catch (error) {
+    console.error('Error fetching lobbies:', error);
     listEl.innerHTML = '<div class="lobby-empty">Error loading lobbies</div>';
   }
+}
+
+function pasteCode() {
+  navigator.clipboard.readText().then(text => {
+    document.getElementById('room-code-input').value = text.toUpperCase();
+  });
 }
 
 async function joinLobbyByCode() {
@@ -468,14 +556,14 @@ async function joinLobbyByCode() {
   const roomCode = codeInput?.value?.toUpperCase().trim();
   
   if (!roomCode) {
-    showToast('Please enter a room code');
+    showToast('Enter a room code');
     return;
   }
-  
   await joinLobbyById(roomCode);
 }
 
 async function joinLobbyById(lobbyId) {
+  multiplayerState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   multiplayerState.lobbyId = lobbyId;
   multiplayerState.isHost = false;
   
@@ -489,24 +577,16 @@ async function joinLobbyById(lobbyId) {
     const snapshot = await lobbyRef.once('value');
     const lobbyData = snapshot.val();
     
-    if (!lobbyData) { showToast('Lobby not found!'); showScreen('menu-screen'); return; }
-    if (lobbyData.status !== 'waiting') { showToast('Game already in progress!'); showScreen('menu-screen'); return; }
+    if (!lobbyData) { showToast('Lobby not found'); showScreen('menu-screen'); return; }
+    if (lobbyData.status !== 'waiting') { showToast('Game in progress'); showScreen('menu-screen'); return; }
+    if (lobbyData.playerOrder.length >= lobbyData.maxPlayers) { showToast('Lobby full'); showScreen('menu-screen'); return; }
     
-    const currentCount = lobbyData.playerOrder ? lobbyData.playerOrder.length : 0;
-    if (currentCount >= lobbyData.maxPlayers) { showToast('Lobby is full!'); showScreen('menu-screen'); return; }
-    
-    // Add player
     const updates = {};
     updates['/players/' + multiplayerState.playerId] = {
-      name: multiplayerState.playerName,
-      isHost: false,
-      isReady: false,
-      joinedAt: firebase.database.ServerValue.TIMESTAMP,
-      isBot: false,
-      isConnected: true
+      name: multiplayerState.playerName, isHost: false, isReady: false,
+      joinedAt: firebase.database.ServerValue.TIMESTAMP, isBot: false, isConnected: true
     };
-    
-    const newOrder = [...(lobbyData.playerOrder || []), multiplayerState.playerId];
+    const newOrder = [...lobbyData.playerOrder, multiplayerState.playerId];
     updates['/playerOrder'] = newOrder;
     
     await lobbyRef.update(updates);
@@ -519,81 +599,60 @@ async function joinLobbyById(lobbyId) {
     setupLobbyListeners();
     setupPresence();
     playSound('join');
-    showToast('Joined lobby: ' + lobbyId);
-    
+    showToast('Joined lobby');
   } catch (error) {
-    showToast('Failed to join lobby');
+    console.error('Error joining lobby:', error);
+    showToast('Failed to join');
     showScreen('menu-screen');
   }
 }
 
 // ==================== QUICK MATCH ====================
-function startQuickMatch() {
+async function startQuickMatch() {
   closeMultiplayerOptions();
-  showScreen('quick-match-screen');
-  performQuickMatch();
-}
-
-async function performQuickMatch() {
-  multiplayerState.playerName = 'Player'; // Default for quick match
   multiplayerState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  multiplayerState.playerName = document.getElementById('player-name').textContent || 'Player';
+  multiplayerState.isQuickMatch = true;
+  showScreen('quick-match-screen');
   
   try {
     const snapshot = await database.ref('lobbies').orderByChild('isPrivate').equalTo(false).once('value');
     let foundLobby = null;
-    
     snapshot.forEach((child) => {
       const data = child.val();
-      if (data.status === 'waiting') {
-        const playerCount = data.playerOrder ? data.playerOrder.length : 0;
-        if (playerCount < data.maxPlayers && playerCount > 0) foundLobby = { id: child.key, ...data };
+      if (data.status === 'waiting' && data.playerOrder.length < data.maxPlayers && data.playerOrder.length > 0) {
+        foundLobby = { id: child.key, ...data };
       }
     });
     
     if (foundLobby) {
-      showScreen('lobby-room'); // Switch screen before joining logic updates UI
       await joinLobbyById(foundLobby.id);
     } else {
-      // Create new quick match lobby
+      // Auto-create if none found
       multiplayerState.isHost = true;
-      multiplayerState.isPrivate = false;
-      multiplayerState.gameMode = 'classic';
-      multiplayerState.maxPlayers = 4;
-      multiplayerState.playerName = 'Player';
-      
       const roomCode = generateRoomCode();
       multiplayerState.lobbyId = roomCode;
-      showScreen('lobby-room');
-      
-      const lobbyRef = database.ref('lobbies/' + roomCode);
-      multiplayerState.lobbyRef = lobbyRef;
+      multiplayerState.lobbyRef = database.ref('lobbies/' + roomCode);
       
       const lobbyData = {
-        hostId: multiplayerState.playerId,
-        hostName: multiplayerState.playerName,
-        gameMode: 'classic',
-        maxPlayers: 4,
-        isPrivate: false,
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        status: 'waiting',
-        isQuickMatch: true,
-        players: {
-          [multiplayerState.playerId]: {
-            name: multiplayerState.playerName, isHost: true, isReady: true, isBot: false, isConnected: true
-          }
-        },
+        hostId: multiplayerState.playerId, hostName: multiplayerState.playerName,
+        gameMode: 'classic', maxPlayers: 4, isPrivate: false,
+        createdAt: firebase.database.ServerValue.TIMESTAMP, status: 'waiting', isQuickMatch: true,
+        players: { [multiplayerState.playerId]: { name: multiplayerState.playerName, isHost: true, isReady: true, isBot: false, isConnected: true, joinedAt: firebase.database.ServerValue.TIMESTAMP } },
         playerOrder: [multiplayerState.playerId]
       };
       
-      await lobbyRef.set(lobbyData);
+      await multiplayerState.lobbyRef.set(lobbyData);
       multiplayerState.playerIndex = 0;
+      showScreen('lobby-room');
       updateLobbyUI();
       setupLobbyListeners();
       setupPresence();
-      playSound('join');
+      showToast('Waiting for players...');
     }
   } catch (error) {
-    showToast('Quick match failed');
+    console.error(error);
+    showToast('Matchmaking failed');
     showScreen('menu-screen');
   }
 }
@@ -605,55 +664,19 @@ function cancelQuickMatch() {
 // ==================== LOBBY UI & LOGIC ====================
 function updateLobbyUI() {
   const codeEl = document.getElementById('display-room-code');
-  const miniCodeEl = document.getElementById('room-code-mini');
   if (codeEl) codeEl.textContent = multiplayerState.lobbyId;
-  if (miniCodeEl) miniCodeEl.textContent = multiplayerState.lobbyId;
+  const codeElMini = document.getElementById('room-code-mini');
+  if (codeElMini) codeElMini.textContent = multiplayerState.lobbyId;
+  
+  const modeEl = document.getElementById('lobby-mode-display');
+  if (modeEl) modeEl.textContent = multiplayerState.gameMode.charAt(0).toUpperCase() + multiplayerState.gameMode.slice(1) + ' Mode';
 }
 
 function copyRoomCode() {
   navigator.clipboard.writeText(multiplayerState.lobbyId).then(() => {
-    showToast('Room code copied!');
+    showToast('Code copied!');
     playSound('card');
-  }).catch(() => showToast('Failed to copy'));
-}
-
-function renderLobbyPlayers(players, playerOrder) {
-  const grid = document.getElementById('lobby-players-grid');
-  if (!grid) return;
-  
-  const maxPlayers = multiplayerState.maxPlayers;
-  const orderedPlayers = playerOrder || Object.keys(players);
-  let html = '';
-  
-  for (let i = 0; i < maxPlayers; i++) {
-    const playerId = orderedPlayers[i];
-    const player = playerId ? players[playerId] : null;
-    
-    if (player) {
-      const isYou = playerId === multiplayerState.playerId;
-      const statusClass = player.isReady ? 'ready' : 'not-ready';
-      
-      html += `
-        <div class="lobby-player-slot filled ${isYou ? 'you' : ''} ${player.isHost ? 'host' : ''}">
-          <div class="slot-avatar" style="background: ${getPlayerColor(i)}">
-             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="white"/></svg>
-          </div>
-          <span class="slot-name">${player.name}${isYou ? ' (You)' : ''}</span>
-          <span class="slot-status">${player.isReady ? 'Ready' : 'Waiting...'}</span>
-          ${!isYou && multiplayerState.isHost ? `<button class="kick-btn" onclick="kickPlayer('${playerId}')">×</button>` : ''}
-        </div>`;
-    } else {
-      html += `
-        <div class="lobby-player-slot empty">
-          <div class="slot-avatar empty">
-             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          </div>
-          <span class="slot-name">Waiting...</span>
-          <span class="slot-status">Empty Slot</span>
-        </div>`;
-    }
-  }
-  grid.innerHTML = html;
+  });
 }
 
 function setupLobbyListeners() {
@@ -663,167 +686,86 @@ function setupLobbyListeners() {
     const data = snapshot.val();
     if (!data) return;
     
-    multiplayerState.maxPlayers = data.maxPlayers;
-    multiplayerState.gameMode = data.gameMode;
-    
-    const modeDisplay = document.getElementById('lobby-mode-display');
-    if (modeDisplay) modeDisplay.textContent = data.gameMode.charAt(0).toUpperCase() + data.gameMode.slice(1) + ' Mode';
-    
-    const countDisplay = document.getElementById('lobby-player-count');
-    const maxDisplay = document.getElementById('lobby-max-players');
-    if (countDisplay) countDisplay.textContent = data.playerOrder ? data.playerOrder.length : 0;
-    if (maxDisplay) maxDisplay.textContent = data.maxPlayers;
-    
-    if (data.players) {
-      renderLobbyPlayers(data.players, data.playerOrder);
-      updateStartButton(data.players);
-    }
+    renderLobbyPlayers(data.players || {}, data.playerOrder || []);
+    updateLobbyInfo(data);
     
     if (data.status === 'playing') startGameFromLobby();
   });
   
-  // Chat listener
-  multiplayerState.lobbyRef.child('chat').limitToLast(50).on('child_added', (snap) => {
+  multiplayerState.lobbyRef.child('chat').limitToLast(20).on('child_added', (snap) => {
     const msg = snap.val();
     if (msg) displayChatMessage(msg);
   });
 }
 
-function updateStartButton(players) {
+function updateLobbyInfo(data) {
+  const countEl = document.getElementById('lobby-player-count');
+  const maxEl = document.getElementById('lobby-max-players');
   const startBtn = document.getElementById('start-game-btn');
-  const changeTeamBtn = document.getElementById('change-team-btn');
-  if (!startBtn) return;
   
-  const playerCount = Object.keys(players).length;
-  const allReady = Object.values(players).every(p => p.isReady);
-  const canStart = multiplayerState.isHost && playerCount >= 1 && allReady; // For testing, allow 1 player start
+  if (countEl) countEl.textContent = data.playerOrder ? data.playerOrder.length : 0;
+  if (maxEl) maxEl.textContent = data.maxPlayers || 4;
   
-  startBtn.disabled = !canStart;
-  
-  // Logic for team mode if needed
-  if (multiplayerState.gameMode === 'team') {
-    changeTeamBtn.style.display = 'block';
-  } else {
-    changeTeamBtn.style.display = 'none';
+  if (startBtn) {
+    const isHost = data.hostId === multiplayerState.playerId;
+    const allReady = Object.values(data.players).every(p => p.isReady || p.isBot);
+    const enoughPlayers = data.playerOrder.length >= 2;
+    startBtn.disabled = !(isHost && allReady && enoughPlayers);
   }
 }
 
-async function toggleReady() {
-  if (!multiplayerState.lobbyRef || !multiplayerState.playerId) return;
-  const playerRef = multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId);
-  const snap = await playerRef.once('value');
-  if (snap.val()) await playerRef.update({ isReady: !snap.val().isReady });
-}
-
-function changeTeam() {
-  showToast("Team switching coming soon!");
-}
-
-async function kickPlayer(playerId) {
-  if (!multiplayerState.isHost || !multiplayerState.lobbyRef) return;
-  await multiplayerState.lobbyRef.child('players/' + playerId).remove();
-  showToast('Player kicked');
-}
-
-async function leaveLobby() {
-  cleanupLobby();
-  showScreen('menu-screen');
-}
-
-function cleanupLobby() {
-  if (multiplayerState.lobbyRef && multiplayerState.playerId) {
-    multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId).remove();
-    // If host leaves and lobby empty, it will clean up or reassign host logic needed
-    multiplayerState.lobbyRef.off();
-  }
-  if (multiplayerState.playerPresenceRef) {
-    multiplayerState.playerPresenceRef.remove();
-    multiplayerState.playerPresenceRef.off();
-  }
+function renderLobbyPlayers(players, playerOrder) {
+  const grid = document.getElementById('lobby-players-grid');
+  if (!grid) return;
   
-  multiplayerState.lobbyRef = null;
-  multiplayerState.lobbyId = null;
-  multiplayerState.isHost = false;
-}
-
-// ==================== CHAT ====================
-function displayChatMessage(msg) {
-  const container = document.getElementById('chat-messages');
-  if (!container) return;
-  
-  const div = document.createElement('div');
-  div.className = 'chat-message';
-  div.innerHTML = `<span class="chat-message-sender">${msg.sender}:</span> <span class="chat-message-text">${msg.text}</span>`;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
-
-async function sendChatMessage() {
-  const input = document.getElementById('chat-input');
-  if (!input || !multiplayerState.lobbyRef) return;
-  const text = input.value.trim();
-  if (!text) return;
-  
-  await multiplayerState.lobbyRef.child('chat').push({
-    sender: multiplayerState.playerName,
-    text: text,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  });
-  input.value = '';
-}
-
-// ==================== PRESENCE ====================
-function setupPresence() {
-  if (!multiplayerState.lobbyId || !multiplayerState.playerId) return;
-  
-  const presenceRef = database.ref('presence/' + multiplayerState.lobbyId + '/' + multiplayerState.playerId);
-  multiplayerState.playerPresenceRef = presenceRef;
-  
-  presenceRef.set({
-    online: true,
-    lastSeen: firebase.database.ServerValue.TIMESTAMP,
-    name: multiplayerState.playerName
-  });
-  
-  presenceRef.onDisconnect().update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
-  
-  if (multiplayerState.lobbyRef) {
-    multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId + '/isConnected').set(true);
-    multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId + '/isConnected').onDisconnect().set(false);
+  grid.innerHTML = '';
+  for (let i = 0; i < multiplayerState.maxPlayers; i++) {
+    const pId = playerOrder[i];
+    const player = pId ? players[pId] : null;
+    
+    const slot = document.createElement('div');
+    slot.className = 'lobby-player-slot ' + (player ? 'filled' : '');
+    if (player) {
+      if (player.isHost) slot.classList.add('host');
+      if (pId === multiplayerState.playerId) slot.classList.add('you');
+      slot.innerHTML = `
+        <div class="slot-avatar" style="background: ${getPlayerColor(i)}">${player.isBot ? '🤖' : '👤'}</div>
+        <span class="slot-name">${player.name}</span>
+        <span class="slot-status">${player.isReady ? 'Ready' : 'Waiting'}</span>
+        ${player.isHost ? '<div class="slot-host-badge">HOST</div>' : ''}
+      `;
+    } else {
+      slot.innerHTML = `<div class="slot-avatar"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="slot-name">Waiting...</span>`;
+    }
+    grid.appendChild(slot);
   }
 }
 
-// ==================== GAME FLOW ====================
+function toggleReady() {
+  if (!multiplayerState.lobbyRef) return;
+  multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId + '/isReady').transaction(ready => !ready);
+  playSound('card');
+}
+
 async function startMultiplayerGame() {
   if (!multiplayerState.isHost || !multiplayerState.lobbyRef) return;
   
   const snapshot = await multiplayerState.lobbyRef.once('value');
   const lobbyData = snapshot.val();
-  if (!lobbyData || lobbyData.status !== 'waiting') return;
+  if (!lobbyData) return;
   
-  // Create deck and initial state
   const deck = createDeck();
   const startCard = deck.pop();
   
   const playerHands = {};
-  lobbyData.playerOrder.forEach(pid => {
-    playerHands[pid] = [];
-    for (let i = 0; i < 7; i++) playerHands[pid].push(deck.pop());
-  });
+  lobbyData.playerOrder.forEach(pid => { playerHands[pid] = []; for(let i=0; i<7; i++) playerHands[pid].push(deck.pop()); });
   
   const gameData = {
-    deck: deck,
-    discard: [startCard],
-    activeColor: startCard.c === 'black' ? 'red' : startCard.c, // Fallback for wild start
-    turn: 0,
-    direction: 1,
-    drawStack: 0,
-    stackType: null,
-    playerOrder: lobbyData.playerOrder,
-    playerHands: playerHands,
-    playerData: lobbyData.players,
-    status: 'playing',
-    startedAt: firebase.database.ServerValue.TIMESTAMP
+    deck, discard: [startCard], activeColor: startCard.c,
+    turn: 0, direction: 1, drawStack: 0, stackType: null,
+    playerOrder: lobbyData.playerOrder, playerHands, playerData: lobbyData.players,
+    status: 'playing', startedAt: firebase.database.ServerValue.TIMESTAMP,
+    gameMode: lobbyData.gameMode
   };
   
   await multiplayerState.lobbyRef.update({ status: 'playing' });
@@ -836,65 +778,95 @@ function startGameFromLobby() {
   initAudio();
   multiplayerState.gameRef = multiplayerState.lobbyRef.child('game');
   setupGameListeners();
-  startAfkTimer();
-  document.addEventListener('click', updateActivity);
 }
 
-function createDeck() {
-  let deck = [];
-  COLORS.forEach(color => {
-    deck.push({ c: color, v: '0' });
-    for (let i = 1; i <= 9; i++) {
-      deck.push({ c: color, v: i.toString() });
-      deck.push({ c: color, v: i.toString() });
-    }
-    SPECIAL_VALUES.forEach(value => {
-      deck.push({ c: color, v: value });
-      deck.push({ c: color, v: value });
+async function leaveLobby() {
+  cleanupLobby();
+  showScreen('menu-screen');
+}
+
+function cleanupLobby() {
+  if (multiplayerState.lobbyRef && multiplayerState.playerId) {
+    multiplayerState.lobbyRef.child('players/' + multiplayerState.playerId).remove();
+    multiplayerState.lobbyRef.child('playerOrder').transaction(order => {
+      if (!order) return null;
+      const newOrder = order.filter(id => id !== multiplayerState.playerId);
+      if (newOrder.length === 0) return null;
+      // Transfer host
+      if (multiplayerState.isHost) {
+        multiplayerState.lobbyRef.child('hostId').set(newOrder[0]);
+        multiplayerState.lobbyRef.child('players/' + newOrder[0] + '/isHost').set(true);
+      }
+      return newOrder;
     });
-  });
-  for (let i = 0; i < 4; i++) {
-    deck.push({ c: 'black', v: 'W' });
-    deck.push({ c: 'black', v: '+4' });
+    multiplayerState.lobbyRef.off();
   }
-  return shuffle(deck);
+  multiplayerState.lobbyRef = null;
+  multiplayerState.lobbyId = null;
+  multiplayerState.isHost = false;
+}
+
+// ==================== CHAT ====================
+function displayChatMessage(msg) {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = 'chat-message';
+  el.innerHTML = `<span class="chat-message-sender" style="color:${getPlayerColor(msg.idx || 0)}">${msg.name}:</span> <span class="chat-message-text">${msg.text}</span>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  if (!input || !multiplayerState.lobbyRef) return;
+  const text = input.value.trim();
+  if (!text) return;
+  await multiplayerState.lobbyRef.child('chat').push({
+    name: multiplayerState.playerName, idx: multiplayerState.playerIndex, text,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+  input.value = '';
+}
+
+// ==================== PRESENCE ====================
+function setupPresence() {
+  if (!multiplayerState.lobbyId || !multiplayerState.playerId) return;
+  const pRef = database.ref('presence/' + multiplayerState.lobbyId + '/' + multiplayerState.playerId);
+  multiplayerState.playerPresenceRef = pRef;
+  pRef.set({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: multiplayerState.playerName });
+  pRef.onDisconnect().update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
 }
 
 // ==================== GAME SYNC ====================
 function setupGameListeners() {
   if (!multiplayerState.gameRef) return;
-  multiplayerState.gameRef.on('value', (snapshot) => {
-    const gameData = snapshot.val();
-    if (!gameData) return;
-    syncGameState(gameData);
+  multiplayerState.gameRef.on('value', (snap) => {
+    const data = snap.val();
+    if (!data) return;
+    syncGameState(data);
   });
 }
 
-function syncGameState(gameData) {
-  const playerOrder = gameData.playerOrder;
-  const myIndex = playerOrder.indexOf(multiplayerState.playerId);
-  multiplayerState.playerIndex = myIndex;
+function syncGameState(data) {
+  const idx = data.playerOrder.indexOf(multiplayerState.playerId);
+  multiplayerState.playerIndex = idx;
   
-  // Build players array
-  state.players = playerOrder.map((pid, idx) => {
-    const pData = gameData.playerData[pid];
-    const hand = gameData.playerHands[pid] || [];
+  state.players = data.playerOrder.map((pid, i) => {
+    const pData = data.playerData[pid];
     return {
-      id: pid,
-      name: pData.name,
-      hand: hand,
-      isBot: pData.isBot || false,
-      isConnected: pData.isConnected !== false
+      id: pid, name: pData.name, hand: data.playerHands[pid] || [],
+      isBot: pData.isBot || false, isConnected: pData.isConnected !== false
     };
   });
   
-  state.deck = gameData.deck || [];
-  state.discard = gameData.discard || [];
-  state.activeColor = gameData.activeColor || 'red';
-  state.turn = gameData.turn || 0;
-  state.direction = gameData.direction || 1;
-  state.drawStack = gameData.drawStack || 0;
-  state.stackType = gameData.stackType || null;
+  state.deck = data.deck || [];
+  state.discard = data.discard || [];
+  state.activeColor = data.activeColor || 'red';
+  state.turn = data.turn || 0;
+  state.direction = data.direction || 1;
+  state.drawStack = data.drawStack || 0;
+  state.stackType = data.stackType || null;
   state.active = true;
   state.isOver = false;
   
@@ -902,101 +874,25 @@ function syncGameState(gameData) {
   updateUI();
   updatePlayerZones();
   
-  // My turn logic
-  if (state.turn === myIndex && !state.players[myIndex].isBot) {
+  const curr = state.players[state.turn];
+  if (state.turn === idx && !curr.isBot && curr.isConnected) {
     startTimer();
     vibrate(100);
   } else {
     stopTimer();
-  }
-  
-  // Bot turn check (host handles bots)
-  const currentPlayer = state.players[state.turn];
-  if (currentPlayer && (currentPlayer.isBot || !currentPlayer.isConnected) && multiplayerState.isHost) {
-    setTimeout(botTurn, 1000);
+    if (curr && (curr.isBot || !curr.isConnected)) setTimeout(botTurn, 1000);
   }
 }
 
 async function sendGameAction(actionType, actionData) {
   if (!multiplayerState.gameRef) return;
   await multiplayerState.gameRef.child('lastAction').set({
-    type: actionType,
-    playerId: multiplayerState.playerId,
-    data: actionData,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
+    type: actionType, pid: multiplayerState.playerId, idx: multiplayerState.playerIndex,
+    data: actionData, time: firebase.database.ServerValue.TIMESTAMP
   });
 }
 
-// ==================== CARD RENDERING ====================
-function renderCard(card, isBack = false) {
-  const el = document.createElement('div');
-  el.className = 'uno-card';
-
-  if (isBack) {
-    el.classList.add('card-back');
-    el.innerHTML = `<svg viewBox="0 0 240 360"><rect width="240" height="360" rx="25" fill="#1a1a2e"/><rect x="10" y="10" width="220" height="340" rx="20" fill="none" stroke="#fff" stroke-width="4"/><text x="120" y="190" font-family="Bebas Neue" font-size="60" fill="var(--uno-red)" text-anchor="middle">UNO</text></svg>`;
-    return el;
-  }
-
-  let fill = '';
-  if (card.c === 'red') fill = 'url(#unoRed)';
-  else if (card.c === 'blue') fill = 'url(#unoBlue)';
-  else if (card.c === 'green') fill = 'url(#unoGreen)';
-  else if (card.c === 'yellow') fill = 'url(#unoYellow)';
-  else fill = '#222'; 
-
-  const isWild = card.c === 'black';
-  let displayValue = card.v;
-  
-  // Simplified SVG for readability in code, but matches CSS styles
-  el.innerHTML = `
-    <svg viewBox="0 0 240 360">
-      <rect width="240" height="360" rx="25" fill="${fill}"/>
-      <rect x="10" y="10" width="220" height="340" rx="20" fill="none" stroke="#fff" stroke-width="8"/>
-      ${!isWild ? `<ellipse cx="120" cy="180" rx="100" ry="150" fill="none" stroke="#fff" stroke-width="10" transform="rotate(-30 120 180)"/>` : ''}
-      <text x="120" y="200" font-family="Bebas Neue, sans-serif" font-size="${isWild ? 60 : 120}" font-weight="bold" fill="#fff" text-anchor="middle" dominant-baseline="middle" stroke="#000" stroke-width="2">${displayValue}</text>
-      <text x="40" y="60" font-family="Bebas Neue" font-size="40" fill="#fff" stroke="#000" stroke-width="1">${displayValue}</text>
-    </svg>`;
-  return el;
-}
-
-function renderHand() {
-  const handContainer = document.getElementById('player-hand');
-  if (!handContainer) return;
-  handContainer.innerHTML = '';
-  
-  const player = state.players[multiplayerState.playerIndex];
-  if (!player) return;
-  
-  const isMyTurn = state.turn === multiplayerState.playerIndex;
-  
-  player.hand.forEach((card, idx) => {
-    const el = renderCard(card);
-    let isValid = false;
-    
-    if (isMyTurn && state.active && !player.isBot) {
-      if (state.drawStack > 0 && gameSettings.stacking) {
-        isValid = canStackCard(card);
-      } else {
-        isValid = checkValidPlay(card);
-      }
-    }
-    
-    if (isValid) el.classList.add('playable');
-    
-    el.onclick = async function() {
-      if (!state.active || state.turn !== multiplayerState.playerIndex || player.isBot) return;
-      if (isValid) await playCard(multiplayerState.playerIndex, idx);
-      else {
-        el.classList.add('shake');
-        setTimeout(() => el.classList.remove('shake'), 500);
-      }
-    };
-    
-    handContainer.appendChild(el);
-  });
-}
-
+// ==================== GAME LOGIC ====================
 function checkValidPlay(card) {
   const top = state.discard[state.discard.length - 1];
   if (!top) return true;
@@ -1013,166 +909,6 @@ function canStackCard(card) {
   return false;
 }
 
-// ==================== GAME ACTIONS ====================
-async function playCard(playerIndex, cardIndex) {
-  const player = state.players[playerIndex];
-  if (!player) return;
-  
-  const card = player.hand.splice(cardIndex, 1)[0];
-  state.discard.push(card);
-  
-  // Stacking logic
-  if (gameSettings.stacking) {
-    if (card.v === '+2') { state.drawStack += 2; state.stackType = '+2'; }
-    else if (card.v === '+4') { state.drawStack += 4; state.stackType = '+4'; }
-    else { state.drawStack = 0; state.stackType = null; }
-  }
-  
-  // Wild Logic
-  if (card.c === 'black') {
-    if (playerIndex === multiplayerState.playerIndex) {
-      state.pendingWild = card;
-      showColorPicker3D();
-      updateUI();
-      return;
-    } else {
-      // Bot or other player picked wild - handled by their logic
-      // If we are host simulating bot, we choose color later
-    }
-  } else {
-    state.activeColor = card.c;
-  }
-  
-  // Win Check
-  if (player.hand.length === 0) {
-    await endMultiplayerGame(playerIndex);
-    return;
-  }
-  
-  // UNO Check
-  if (player.hand.length === 1) state.saidUno.add(playerIndex);
-  
-  // Apply effects & Advance
-  await applyCardEffect(card, playerIndex);
-  await advanceTurn();
-  
-  // Sync to DB
-  if (multiplayerState.gameRef) {
-    const updates = {
-      turn: state.turn, direction: state.direction, discard: state.discard,
-      deck: state.deck, activeColor: state.activeColor, drawStack: state.drawStack,
-      stackType: state.stackType, playerHands: {}
-    };
-    state.players.forEach(p => updates.playerHands[p.id] = p.hand);
-    await multiplayerState.gameRef.update(updates);
-  }
-  
-  // Effects
-  playSound(card.v === 'S' ? 'skip' : card.v === 'R' ? 'reverse' : 'card');
-  vibrate(50);
-  updateUI();
-  renderHand();
-}
-
-async function selectWildColor(color) {
-  state.activeColor = color;
-  hideColorPicker3D();
-  
-  if (multiplayerState.gameRef) await multiplayerState.gameRef.update({ activeColor: color });
-  
-  await applyCardEffect(state.pendingWild, multiplayerState.playerIndex);
-  state.pendingWild = null;
-  await advanceTurn();
-  
-  playSound('wild');
-  createWildExplosion();
-}
-
-async function applyCardEffect(card, currentPlayerIndex) {
-  const nextIdx = getNextPlayerIndex();
-  const nextPlayer = state.players[nextIdx];
-  
-  if (state.drawStack === 0 || !gameSettings.stacking) {
-    if (card.v === 'S') {
-      showGameMessage(nextPlayer.name + ' Skipped!');
-      state.turn = nextIdx; // Skip doubles turn advance? No, advanceTurn handles it. Logic: Skip jumps over next.
-      // Effectively: playCard -> advanceTurn moves to next. Skip needs to move one extra.
-      // Simplified: state.turn becomes nextIdx. Then advanceTurn moves again.
-      // But normally: current plays Skip. Next player is skipped.
-      // We set state.turn = nextIdx (the skipped person) and then advanceTurn will move to the person after them? 
-      // Or advanceTurn logic should handle this.
-      // Standard logic: 
-      // playCard -> ... -> advanceTurn.
-      // If Skip: next player index = current + direction. 
-      // Turn should become that skipped player, then advanceTurn moves again? 
-      // Actually, easiest is: if Skip, state.turn = nextIdx (skipped). Then advanceTurn moves to next. 
-      // But we must ensure advanceTurn logic doesn't skip the skipped person again.
-      // Let's just modify advanceTurn to handle current player context? 
-      // Better: `advanceTurn(skip=true)`.
-    } else if (card.v === 'R') {
-      state.direction *= -1;
-      showGameMessage('Reversed!');
-      if (state.players.length === 2) state.turn = currentPlayerIndex; // Acts as skip in 2 player
-    }
-  }
-  
-  // Draw stack logic (if next player cannot stack)
-  if (state.drawStack > 0 && gameSettings.stacking) {
-    // Check if next player can stack
-    const canStack = nextPlayer.hand.some(c => canStackCard(c));
-    if (!canStack) {
-      const drawn = drawCards(state.drawStack);
-      nextPlayer.hand.push(...drawn);
-      showGameMessage(nextPlayer.name + ' drew ' + state.drawStack + ' cards!');
-      state.drawStack = 0;
-      state.stackType = null;
-      // Their turn is skipped essentially because they drew? Or do they play?
-      // Rules vary. Usually +2/+4 skips the turn.
-      state.turn = nextIdx; // They are the victim.
-      // advanceTurn will move from them to next.
-    }
-  }
-}
-
-function getNextPlayerIndex() {
-  let next = state.turn + state.direction;
-  if (next >= state.players.length) next = 0;
-  if (next < 0) next = state.players.length - 1;
-  return next;
-}
-
-async function advanceTurn(skipCurrent = false) {
-  // If we are handling skip/reverse logic inside playCard, this just moves normally.
-  // But simpler: 
-  let next = getNextPlayerIndex();
-  
-  // Check if we need to skip (from Skip card or +2/+4)
-  // Actually, let's just compute next.
-  state.turn = next;
-  
-  // Sync
-  if (multiplayerState.gameRef) {
-    // Partial update for turn change
-    const updates = { turn: state.turn, direction: state.direction };
-    state.players.forEach(p => updates['playerHands/' + p.id] = p.hand); // Sync hands just in case
-    await multiplayerState.gameRef.update(updates);
-  }
-  
-  updateUI();
-  renderHand();
-  
-  const currentPlayer = state.players[state.turn];
-  if (currentPlayer && (currentPlayer.isBot || !currentPlayer.isConnected) && multiplayerState.isHost) {
-    setTimeout(botTurn, 1000);
-  } else if (state.turn === multiplayerState.playerIndex) {
-    startTimer();
-    vibrate(100);
-  } else {
-    stopTimer();
-  }
-}
-
-// ==================== DRAW CARD ====================
 function drawCards(count) {
   let drawn = [];
   for (let i = 0; i < count; i++) {
@@ -1187,85 +923,94 @@ function drawCards(count) {
   return drawn;
 }
 
-async function handleDrawPile() {
-  if (state.turn !== multiplayerState.playerIndex || !state.active) return;
+async function playCard(pIdx, cIdx) {
+  if (!multiplayerState.gameRef) return;
   
-  stopTimer();
-  const player = state.players[multiplayerState.playerIndex];
+  const player = state.players[pIdx];
+  const card = player.hand.splice(cIdx, 1)[0];
+  state.discard.push(card);
+  
+  if (gameSettings.stacking) {
+    if (card.v === '+2') { state.drawStack += 2; state.stackType = '+2'; }
+    else if (card.v === '+4') { state.drawStack += 4; state.stackType = '+4'; }
+    else { state.drawStack = 0; state.stackType = null; }
+  }
+  
+  if (card.c === 'black') {
+    if (pIdx === multiplayerState.playerIndex) {
+      state.pendingWild = card;
+      showColorPicker3D();
+      updateUI();
+      return;
+    } else {
+      state.activeColor = chooseColor(pIdx);
+    }
+  } else {
+    state.activeColor = card.c;
+  }
+  
+  if (player.hand.length === 0) { await endMultiplayerGame(pIdx); return; }
+  if (player.hand.length === 1) state.saidUno.add(pIdx);
+  
+  await applyCardEffect(card, pIdx);
+  await advanceTurn();
+  
+  // Sounds/Effects
+  if (card.v === 'S') { playSound('skip'); showActionFlash('skip'); showSkipSymbol(getNextPlayerIndex()); }
+  else if (card.v === 'R') { playSound('reverse'); showActionFlash('reverse'); showReverseSymbol(); }
+  else if (card.c === 'black') { playSound('wild'); createWildExplosion(); }
+  else playSound('card');
+  
+  vibrate(50);
+  updateUI(); renderHand();
+}
+
+async function applyCardEffect(card, pIdx) {
+  const nextIdx = getNextPlayerIndex();
+  const nextP = state.players[nextIdx];
+  
+  if (state.drawStack === 0 || !gameSettings.stacking) {
+    if (card.v === 'S') {
+      showGameMessage(nextP.name + ' Skipped!');
+      state.turn = nextIdx;
+    } else if (card.v === 'R') {
+      state.direction *= -1;
+      showGameMessage('Reversed!');
+      if (state.players.length === 2) state.turn = nextIdx;
+    }
+  }
   
   if (state.drawStack > 0 && gameSettings.stacking) {
-    // Must stack or draw
-    const canStack = player.hand.some(c => canStackCard(c));
-    if (canStack) {
-      showGameMessage("You have a card to stack!");
-      startTimer();
-      return;
+    const canStack = nextP.hand.some(c => canStackCard(c));
+    if (!canStack) {
+      const drawn = drawCards(state.drawStack);
+      nextP.hand.push(...drawn);
+      showGameMessage(nextP.name + ' drew ' + state.drawStack + '!');
+      state.drawStack = 0; state.stackType = null;
+      state.turn = nextIdx;
     }
-    // Draw stack
-    const drawn = drawCards(state.drawStack);
-    player.hand.push(...drawn);
-    showGameMessage('You drew ' + state.drawStack + ' cards!');
-    vibrate([50, 30, 50]);
-    state.drawStack = 0;
-    state.stackType = null;
-    renderHand();
-    updateUI();
-    await advanceTurn();
-    return;
-  }
-  
-  // Normal Draw
-  const card = drawCards(1)[0];
-  if (!card) return;
-  
-  player.hand.push(card);
-  renderHand();
-  updateUI();
-  
-  const isPlayable = checkValidPlay(card);
-  
-  if (isPlayable) {
-    showDrawnCardPopup(card, true);
-  } else {
-    showGameMessage("Cannot play this card");
-    await sleep(500);
-    await advanceTurn();
   }
 }
 
-function showDrawnCardPopup(card, canPlay) {
-  const popup = document.getElementById('drawn-card-popup');
-  const display = document.getElementById('drawn-card-display');
-  const playBtn = document.getElementById('play-btn');
-  
-  if (display) {
-    display.innerHTML = '';
-    display.appendChild(renderCard(card));
-  }
-  if (playBtn) playBtn.style.display = canPlay ? 'block' : 'none';
-  if (popup) popup.classList.add('active');
-  
-  state.drawnCard = card;
+function getNextPlayerIndex() {
+  let next = state.turn + state.direction;
+  if (next >= state.players.length) next = 0;
+  if (next < 0) next = state.players.length - 1;
+  return next;
 }
 
-function hideDrawnCardPopup() {
-  const popup = document.getElementById('drawn-card-popup');
-  if (popup) popup.classList.remove('active');
-}
-
-async function handleKeepCard() {
-  hideDrawnCardPopup();
-  await advanceTurn();
-}
-
-async function handlePlayDrawnCard() {
-  if (!state.drawnCard) return;
-  const player = state.players[multiplayerState.playerIndex];
-  if (!player) return;
+async function advanceTurn() {
+  state.turn = getNextPlayerIndex();
   
-  const cardIndex = player.hand.length - 1; // Assuming it was added to end
-  hideDrawnCardPopup();
-  await playCard(multiplayerState.playerIndex, cardIndex);
+  const updates = {
+    turn: state.turn, direction: state.direction, discard: state.discard, deck: state.deck,
+    activeColor: state.activeColor, drawStack: state.drawStack, stackType: state.stackType,
+    playerHands: {}
+  };
+  state.players.forEach(p => updates.playerHands[p.id] = p.hand);
+  await multiplayerState.gameRef.update(updates);
+  
+  updateUI(); renderHand();
 }
 
 // ==================== BOT AI ====================
@@ -1274,226 +1019,354 @@ async function botTurn() {
   const player = state.players[state.turn];
   if (!player || !player.isBot) return;
   
-  // Simple AI
-  let validMoves = [];
-  player.hand.forEach((card, index) => {
-    if (state.drawStack > 0) {
-      if (canStackCard(card)) validMoves.push({ card, index });
-    } else {
-      if (checkValidPlay(card)) validMoves.push({ card, index });
-    }
-  });
-  
-  await sleep(1000);
-  
-  if (validMoves.length > 0) {
-    const move = validMoves[Math.floor(Math.random() * validMoves.length)]; // Random valid move
-    await playCard(state.turn, move.index);
-  } else {
-    // Draw
-    if (state.drawStack > 0) {
+  if (state.drawStack > 0 && gameSettings.stacking) {
+    const sIdx = player.hand.findIndex(c => canStackCard(c));
+    if (sIdx !== -1) { await playCard(state.turn, sIdx); return; }
+    else {
       const drawn = drawCards(state.drawStack);
       player.hand.push(...drawn);
-      showGameMessage(player.name + ' drew ' + state.drawStack + ' cards!');
+      showGameMessage(player.name + ' drew ' + state.drawStack + '!');
       state.drawStack = 0; state.stackType = null;
-      await advanceTurn();
-    } else {
-      const card = drawCards(1)[0];
-      if (card) {
-        player.hand.push(card);
-        showGameMessage(player.name + ' drew a card');
-        playSound('draw');
-        await sleep(500);
-        if (checkValidPlay(card)) await playCard(state.turn, player.hand.length - 1);
-        else await advanceTurn();
-      } else await advanceTurn();
+      await advanceTurn(); return;
     }
   }
+  
+  const validMoves = [];
+  player.hand.forEach((c, i) => { if (checkValidPlay(c)) validMoves.push({ c, i }); });
+  
+  await sleep(800);
+  
+  if (validMoves.length > 0) {
+    validMoves.sort((a, b) => getCardPriority(b.c) - getCardPriority(a.c));
+    await playCard(state.turn, validMoves[0].i);
+  } else {
+    const drawn = drawCards(1);
+    if (drawn.length > 0) {
+      player.hand.push(drawn[0]);
+      showGameMessage(player.name + ' drew');
+      playSound('draw');
+      await sleep(400);
+      if (checkValidPlay(drawn[0])) await playCard(state.turn, player.hand.length - 1);
+      else await advanceTurn();
+    } else await advanceTurn();
+  }
+}
+
+function getCardPriority(c) {
+  if (c.v === '+4') return 20;
+  if (c.v === '+2') return 18;
+  if (c.v === 'S') return 15;
+  if (c.v === 'R') return 14;
+  if (c.v === 'W') return 10;
+  return parseInt(c.v) || 5;
+}
+
+function chooseColor(pIdx) {
+  const p = state.players[pIdx];
+  if (!p) return 'red';
+  const counts = { red: 0, blue: 0, green: 0, yellow: 0 };
+  p.hand.forEach(c => { if (c.c !== 'black') counts[c.c]++; });
+  return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
 }
 
 // ==================== UI UPDATES ====================
 function updateUI() {
-  // Discard Pile
-  const pile = document.getElementById('discard-pile');
-  if (pile) {
+  const discard = document.getElementById('discard-pile');
+  if (discard) {
     const top = state.discard[state.discard.length - 1];
     if (top) {
-      pile.innerHTML = '';
+      discard.innerHTML = '';
       const el = renderCard(top);
-      el.style.transform = `rotate(${state.discardRotation}deg)`;
-      pile.appendChild(el);
+      state.discardRotation = (state.discardRotation || 0) + (Math.random() * 20 - 10);
+      el.style.transform = 'rotate(' + state.discardRotation + 'deg)';
+      discard.appendChild(el);
     }
   }
   
-  // Color Indicator
-  const indicator = document.getElementById('color-indicator');
-  if (indicator) indicator.className = 'color-indicator ' + state.activeColor;
+  const colorInd = document.getElementById('color-indicator');
+  if (colorInd) colorInd.className = 'color-indicator ' + state.activeColor;
   
-  // Deck Count
-  const deckCount = document.getElementById('deck-count');
-  if (deckCount) deckCount.textContent = state.deck.length;
+  const deckC = document.getElementById('deck-count');
+  if (deckC) deckC.textContent = state.deck.length;
   
-  // UNO Button
+  const dir = document.getElementById('direction-indicator');
+  if (dir) {
+    dir.classList.add('active');
+    dir.classList.toggle('clockwise', state.direction === 1);
+    dir.classList.toggle('counter', state.direction === -1);
+  }
+  
   const unoBtn = document.getElementById('uno-btn');
-  const p = state.players[multiplayerState.playerIndex];
-  if (unoBtn && p) {
-    const show = state.turn === multiplayerState.playerIndex && p.hand.length === 2 && state.active;
+  const curr = state.players[state.turn];
+  if (unoBtn && curr) {
+    const show = state.turn === multiplayerState.playerIndex && curr.hand.length === 2 && state.active && !state.saidUno.has(multiplayerState.playerIndex);
     unoBtn.classList.toggle('active', show);
   }
+  
+  updateTurnIndicator();
+}
+
+function updateTurnIndicator() {
+  const ind = document.getElementById('turn-indicator');
+  const txt = document.getElementById('turn-text');
+  if (!ind) return;
+  if (state.active && !state.isOver) {
+    ind.style.display = 'flex';
+    const curr = state.players[state.turn];
+    txt.textContent = state.turn === multiplayerState.playerIndex ? 'Your Turn' : curr?.name + "'s Turn";
+  } else ind.style.display = 'none';
 }
 
 function updatePlayerZones() {
-  state.players.forEach((player, idx) => {
-    const zone = document.querySelector('.player-zone.player-' + getPositionClass(idx, state.players.length));
+  state.players.forEach((p, i) => {
+    const zone = document.querySelector('.player-zone.player-' + getPositionClass(i, state.players.length));
     if (!zone) return;
     
     const nameEl = zone.querySelector('.player-name');
     const countEl = zone.querySelector('.card-count');
-    const infoEl = zone.querySelector('.player-info');
+    const info = zone.querySelector('.player-info');
     
-    if (nameEl) nameEl.textContent = player.name;
-    if (countEl) countEl.textContent = player.hand.length + ' cards';
-    
-    if (infoEl) {
-      infoEl.classList.remove('active', 'warning');
-      if (state.turn === idx) {
-        infoEl.classList.add('active');
-        if (state.timer <= 3) infoEl.classList.add('warning');
-      }
+    if (nameEl) nameEl.textContent = p.name + (p.isBot ? ' 🤖' : '');
+    if (countEl) countEl.textContent = p.hand.length + ' cards';
+    if (info) {
+      info.classList.toggle('active', state.turn === i);
+      info.classList.toggle('warning', state.turn === i && state.timer <= 3);
     }
     
-    // Bot Cards
-    if (idx !== multiplayerState.playerIndex) {
-      const containerClass = (idx === 1 || idx === 3) ? '.bot-cards-vertical' : '.bot-cards-horizontal';
-      const cardsContainer = zone.querySelector(containerClass);
-      if (cardsContainer) {
-        cardsContainer.innerHTML = '';
-        const count = Math.min(player.hand.length, 7);
-        for (let i = 0; i < count; i++) cardsContainer.appendChild(renderCard(null, true));
-      }
+    const cardsCon = zone.querySelector('.bot-cards-horizontal, .bot-cards-vertical');
+    if (cardsCon && i !== multiplayerState.playerIndex) {
+      cardsCon.innerHTML = '';
+      const cnt = Math.min(p.hand.length, 7);
+      for (let j = 0; j < cnt; j++) cardsCon.appendChild(renderCard(null, true));
     }
+    
+    let alert = zone.querySelector('.uno-alert');
+    if (p.hand.length === 1) {
+      if (!alert) { alert = document.createElement('div'); alert.className = 'uno-alert'; alert.textContent = 'UNO!'; info?.appendChild(alert); }
+    } else alert?.remove();
   });
 }
 
-// ==================== TIMERS ====================
-function startTimer() {
-  if (!gameSettings.timer) return;
-  stopTimer();
-  state.timer = TURN_TIME;
-  updatePlayerZones();
+// ==================== HAND RENDERING ====================
+function renderHand() {
+  const con = document.getElementById('player-hand');
+  if (!con) return;
+  con.innerHTML = '';
   
-  state.timerInterval = setInterval(() => {
-    state.timer--;
-    updatePlayerZones();
-    if (state.timer <= 3 && state.timer > 0) playSound('tick');
-    if (state.timer <= 0) {
-      stopTimer();
-      handleTimeout();
+  const p = state.players[multiplayerState.playerIndex];
+  if (!p) return;
+  const isMyTurn = state.turn === multiplayerState.playerIndex;
+  
+  p.hand.forEach((card, i) => {
+    const el = renderCard(card);
+    let valid = false;
+    if (isMyTurn && state.active && !p.isBot) {
+      valid = (state.drawStack > 0 && gameSettings.stacking) ? canStackCard(card) : checkValidPlay(card);
     }
-  }, 1000);
+    
+    if (valid) el.classList.add('playable');
+    
+    el.onclick = async () => {
+      if (!state.active || state.turn !== multiplayerState.playerIndex || p.isBot) return;
+      if (valid) await playCard(multiplayerState.playerIndex, i);
+      else { el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 500); }
+    };
+    
+    con.appendChild(el);
+  });
 }
 
-function stopTimer() {
-  if (state.timerInterval) clearInterval(state.timerInterval);
-}
-
-async function handleTimeout() {
-  if (state.turn !== multiplayerState.playerIndex) return;
-  showGameMessage('Time Out!');
-  // Auto draw 1
-  const card = drawCards(1)[0];
-  if (card) state.players[multiplayerState.playerIndex].hand.push(card);
+function sortHand(type) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort-' + type)?.classList.add('active');
+  
+  const p = state.players[multiplayerState.playerIndex];
+  if (!p) return;
+  
+  if (type === 'color') p.hand.sort((a, b) => (a.c === 'black ? 1 : 0) - (b.c === 'black' ? 1 : 0) || a.c.localeCompare(b.c));
+  else p.hand.sort((a, b) => (parseInt(a.v) || 20) - (parseInt(b.v) || 20));
+  
   renderHand();
+}
+
+// ==================== COLOR PICKER ====================
+function showColorPicker3D() { document.getElementById('color-picker-3d')?.classList.add('active'); }
+function hideColorPicker3D() { document.getElementById('color-picker-3d')?.classList.remove('active'); }
+
+async function selectWildColor(color) {
+  state.activeColor = color;
+  hideColorPicker3D();
+  await multiplayerState.gameRef?.update({ activeColor: color });
+  await applyCardEffect(state.pendingWild, multiplayerState.playerIndex);
+  state.pendingWild = null;
   await advanceTurn();
+  playSound('wild');
+  createWildExplosion();
 }
 
-function startAfkTimer() {
-  multiplayerState.afkTimer = setInterval(() => {
-    if (Date.now() - multiplayerState.lastActivity > 30000 && state.turn === multiplayerState.playerIndex) {
-      showToast("You are AFK!");
-      // Bot takes over? 
-    }
-  }, 5000);
+// ==================== DRAW CARD ====================
+async function handleDrawPile() {
+  if (state.turn !== multiplayerState.playerIndex || !state.active) return;
+  const p = state.players[multiplayerState.playerIndex];
+  if (p.isBot) return;
+  
+  stopTimer();
+  
+  if (state.drawStack > 0 && gameSettings.stacking && p.hand.some(c => canStackCard(c))) {
+    showGameMessage("You can stack!"); startTimer(); return;
+  }
+  
+  const cards = drawCards(state.drawStack > 0 ? state.drawStack : 1);
+  if (state.drawStack > 0) { p.hand.push(...cards); state.drawStack = 0; state.stackType = null; }
+  else if (cards[0]) {
+    p.hand.push(cards[0]);
+    const playable = checkValidPlay(cards[0]);
+    if (playable) showDrawnCardPopup(cards[0], true);
+    else { showGameMessage("Cannot play"); await sleep(500); await advanceTurn(); }
+  }
+  
+  renderHand(); updateUI();
 }
 
-function updateActivity() { multiplayerState.lastActivity = Date.now(); }
+function showDrawnCardPopup(card, canPlay) {
+  const popup = document.getElementById('drawn-card-popup');
+  const display = document.getElementById('drawn-card-display');
+  const playBtn = document.getElementById('play-btn');
+  if (!popup || !display) return;
+  
+  display.innerHTML = ''; display.appendChild(renderCard(card));
+  if (playBtn) playBtn.style.display = canPlay ? 'block' : 'none';
+  popup.classList.add('active');
+  state.drawnCard = card;
+}
+
+function hideDrawnCardPopup() { document.getElementById('drawn-card-popup')?.classList.remove('active'); }
+
+async function handlePlayDrawnCard() {
+  const p = state.players[multiplayerState.playerIndex];
+  if (!p || !state.drawnCard) return;
+  hideDrawnCardPopup();
+  await playCard(multiplayerState.playerIndex, p.hand.length - 1);
+}
+
+async function handleKeepCard() { hideDrawnCardPopup(); await advanceTurn(); }
+
+// ==================== UNO BUTTON ====================
+async function handleUnoButton() {
+  if (state.turn !== multiplayerState.playerIndex || !state.active) return;
+  const p = state.players[multiplayerState.playerIndex];
+  if (!p || p.hand.length !== 2) return;
+  state.saidUno.add(multiplayerState.playerIndex);
+  playSound('uno');
+  showGameMessage('UNO!');
+}
+
+// ==================== EMOTES ====================
+function toggleEmotePanel(idx) {
+  const panel = document.getElementById('emote-panel');
+  if (panel) panel.classList.toggle('active');
+}
+
+async function sendEmote(key) {
+  const emote = EMOTES[key];
+  if (!emote) return;
+  showEmote(multiplayerState.playerIndex, emote);
+  playSound('emote');
+  document.getElementById('emote-panel')?.classList.remove('active');
+}
+
+function showEmote(idx, emote) {
+  const zone = document.querySelector('.player-zone.player-' + getPositionClass(idx, state.players.length));
+  if (!zone) return;
+  let bubble = zone.querySelector('.emote-bubble');
+  if (!bubble) { bubble = document.createElement('div'); bubble.className = 'emote-bubble'; zone.appendChild(bubble); }
+  bubble.textContent = emote;
+  bubble.classList.add('show');
+  setTimeout(() => bubble.classList.remove('show'), 2000);
+}
 
 // ==================== EFFECTS ====================
-function showColorPicker3D() {
-  const picker = document.getElementById('color-picker-3d');
-  if (picker) picker.classList.add('active');
+function showActionFlash(type) {
+  const ov = document.getElementById('action-flash-overlay');
+  if (!ov) return;
+  ov.className = 'action-flash-overlay ' + type;
+  void ov.offsetWidth;
+  ov.classList.add('active');
+  setTimeout(() => ov.classList.remove('active'), 500);
 }
 
-function hideColorPicker3D() {
-  const picker = document.getElementById('color-picker-3d');
-  if (picker) picker.classList.remove('active');
+function showSkipSymbol(idx) {
+  const zone = document.querySelector('.player-zone.player-' + getPositionClass(idx, state.players.length));
+  if (!zone) return;
+  let sym = zone.querySelector('.skip-symbol');
+  if (!sym) { sym = document.createElement('div'); sym.className = 'skip-symbol'; sym.innerHTML = '⊘'; zone.appendChild(sym); }
+  sym.classList.add('show');
+  setTimeout(() => sym.classList.remove('show'), 1000);
+}
+
+function showReverseSymbol() {
+  showGameMessage('Direction Reversed!');
+  const dir = document.getElementById('direction-indicator');
+  if (dir) {
+    dir.style.transform = 'scale(1.5)';
+    setTimeout(() => dir.style.transform = '', 300);
+  }
 }
 
 function createWildExplosion() {
-  let container = document.getElementById('wild-explosion');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'wild-explosion';
-    container.className = 'wild-explosion';
-    document.body.appendChild(container);
-  }
+  const cont = document.getElementById('wild-explosion');
+  if (!cont) return;
   const colors = ['#FF3B5C', '#4DABF7', '#51CF66', '#FFD43B'];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 20; i++) {
     const p = document.createElement('div');
     p.className = 'wild-particle';
     p.style.background = colors[Math.floor(Math.random() * colors.length)];
-    p.style.setProperty('--tx', (Math.random() * 200 - 100) + 'px');
-    p.style.setProperty('--ty', (Math.random() * 200 - 100) + 'px');
-    container.appendChild(p);
+    p.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+    p.style.setProperty('--ty', (Math.random() - 0.5) * 200 + 'px');
+    cont.appendChild(p);
     setTimeout(() => p.remove(), 800);
   }
 }
 
+// ==================== END GAME ====================
+async function endMultiplayerGame(winnerIdx) {
+  state.isOver = true; state.active = false;
+  stopTimer();
+  
+  const isWin = winnerIdx === multiplayerState.playerIndex;
+  if (isWin) { createConfetti(); playSound('win'); }
+  else playSound('lose');
+  
+  document.getElementById('game-over')?.classList.add('active');
+  const resIcon = document.getElementById('result-icon');
+  const winText = document.getElementById('winner-text');
+  const xpVal = document.getElementById('xp-value');
+  
+  if (resIcon) resIcon.innerHTML = isWin ? '🏆' : '😢';
+  if (winText) winText.textContent = isWin ? 'YOU WIN!' : 'YOU LOSE';
+  if (xpVal) xpVal.textContent = '+' + (isWin ? 300 : 50);
+  
+  multiplayerState.lobbyRef?.update({ status: 'finished' });
+}
+
 function createConfetti() {
-  let container = document.getElementById('confetti-container');
-  if (!container) return; // Should exist in HTML
-  container.innerHTML = '';
+  const cont = document.getElementById('confetti-container');
+  if (!cont) return;
   const colors = ['#FF3B5C', '#4DABF7', '#51CF66', '#FFD43B'];
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 50; i++) {
     const c = document.createElement('div');
     c.className = 'confetti';
     c.style.left = Math.random() * 100 + '%';
     c.style.background = colors[Math.floor(Math.random() * colors.length)];
-    c.style.animationDelay = Math.random() * 1 + 's';
-    container.appendChild(c);
+    cont.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
   }
-}
-
-// ==================== END GAME ====================
-async function endMultiplayerGame(winnerIndex) {
-  state.isOver = true; state.active = false;
-  stopTimer(); clearInterval(multiplayerState.afkTimer);
-  
-  const isWin = winnerIndex === multiplayerState.playerIndex;
-  if (multiplayerState.lobbyRef) await multiplayerState.lobbyRef.update({ status: 'finished' });
-  
-  if (isWin) { createConfetti(); playSound('win'); }
-  else playSound('lose');
-  
-  const modal = document.getElementById('game-over');
-  const icon = document.getElementById('result-icon');
-  const text = document.getElementById('winner-text');
-  const xp = document.getElementById('xp-value');
-  
-  if (icon) icon.innerHTML = isWin 
-    ? '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white"/></svg>'
-    : '<svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" fill="white"/></svg>';
-  if (icon) icon.className = 'result-icon ' + (isWin ? 'win' : 'lose');
-  if (text) text.textContent = isWin ? 'YOU WIN!' : 'YOU LOSE';
-  if (xp) xp.textContent = '+' + (isWin ? 250 : 50);
-  if (modal) modal.classList.add('active');
 }
 
 function rematch() {
   document.getElementById('game-over')?.classList.remove('active');
-  if (multiplayerState.isHost) multiplayerState.lobbyRef?.update({ status: 'waiting' });
+  if (multiplayerState.isHost) multiplayerState.lobbyRef?.update({ status: 'waiting', game: null });
   showScreen('lobby-room');
-  updateLobbyUI();
 }
 
 function backToLobby() {
@@ -1507,101 +1380,91 @@ function backToMenu() {
   showScreen('menu-screen');
 }
 
+// ==================== TIMER ====================
+function startTimer() {
+  if (!gameSettings.timer) return;
+  stopTimer();
+  state.timer = TURN_TIME;
+  updatePlayerZones();
+  
+  state.timerInterval = setInterval(() => {
+    state.timer--;
+    updatePlayerZones();
+    if (state.timer <= 3 && state.timer > 0) playSound('tick');
+    if (state.timer <= 0) { stopTimer(); handleTimeout(); }
+  }, 1000);
+}
+
+function stopTimer() { if (state.timerInterval) { clearInterval(state.timerInterval); state.timerInterval = null; } }
+
+async function handleTimeout() {
+  if (state.turn !== multiplayerState.playerIndex) return;
+  showGameMessage('Time Out!');
+  
+  if (state.drawStack > 0) {
+    const drawn = drawCards(state.drawStack);
+    state.players[multiplayerState.playerIndex].hand.push(...drawn);
+    state.drawStack = 0; state.stackType = null;
+  } else {
+    const c = drawCards(1)[0];
+    if (c) state.players[multiplayerState.playerIndex].hand.push(c);
+  }
+  renderHand(); updateUI();
+  await advanceTurn();
+}
+
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
   runLoadingScreen();
   
-  // Draw Pile
-  document.getElementById('draw-pile')?.addEventListener('click', handleDrawPile);
-  
-  // UNO Button
-  document.getElementById('uno-btn')?.addEventListener('click', () => {
-    if (state.turn === multiplayerState.playerIndex && state.players[multiplayerState.playerIndex]?.hand.length === 2) {
-      state.saidUno.add(multiplayerState.playerIndex);
-      playSound('uno');
-      showGameMessage('UNO!');
-    }
+  // Theme cards selection (solo vs multiplayer handled via buttons inside)
+  document.querySelectorAll('.theme-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
   });
   
-  // Color Picker
+  // Mode buttons in Create Lobby
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  
+  // Player count buttons
+  document.querySelectorAll('.count-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  
+  // Color picker
   document.querySelectorAll('.color-box-3d').forEach(box => {
     box.addEventListener('click', () => selectWildColor(box.dataset.color));
   });
   
-  // Sort Buttons
-  document.getElementById('sort-color')?.addEventListener('click', () => {
-    state.sortMode = 'color';
-    sortHand();
-  });
-  document.getElementById('sort-value')?.addEventListener('click', () => {
-    state.sortMode = 'value';
-    sortHand();
-  });
+  // Draw pile
+  document.getElementById('draw-pile')?.addEventListener('click', handleDrawPile);
   
-  // Drawn Card Popup Buttons
+  // UNO button
+  document.getElementById('uno-btn')?.addEventListener('click', handleUnoButton);
+  
+  // Drawn card buttons
   document.getElementById('keep-btn')?.addEventListener('click', handleKeepCard);
   document.getElementById('play-btn')?.addEventListener('click', handlePlayDrawnCard);
   
   // Chat
-  document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendChatMessage();
-  });
+  document.getElementById('chat-input')?.addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
   
-  // Theme Selection
-  document.querySelectorAll('.theme-card').forEach(card => {
-    card.addEventListener('click', function() {
-      document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
-      this.classList.add('selected');
-    });
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (state.isOver || !state.active) return;
+    if (e.key === 'u' || e.key === 'U') handleUnoButton();
+    if (e.key === 'd' || e.key === 'D') handleDrawPile();
+    if (e.key === 'Escape') { hideColorPicker3D(); hideDrawnCardPopup(); }
   });
 });
-
-function sortHand() {
-  const player = state.players[multiplayerState.playerIndex];
-  if (!player) return;
-  
-  if (state.sortMode === 'color') {
-    player.hand.sort((a, b) => {
-      if (a.c === b.c) return a.v.localeCompare(b.v);
-      return a.c.localeCompare(b.c);
-    });
-  } else {
-    player.hand.sort((a, b) => a.v.localeCompare(b.v));
-  }
-  renderHand();
-}
-
-// Global function exposure for HTML onclick
-window.showMultiplayerOptions = showMultiplayerOptions;
-window.closeMultiplayerOptions = closeMultiplayerOptions;
-window.startQuickMatch = startQuickMatch;
-window.showSettings = showSettings;
-window.closeSettings = closeSettings;
-window.toggleSetting = toggleSetting;
-window.showLeaderboard = showLeaderboard;
-window.closeLeaderboard = closeLeaderboard;
-window.showCreateLobby = showCreateLobby;
-window.closeCreateLobby = closeCreateLobby;
-window.togglePrivate = togglePrivate;
-window.createLobby = createLobby;
-window.showJoinLobby = showJoinLobby;
-window.closeJoinLobby = closeJoinLobby;
-window.pasteCode = pasteCode;
-window.joinLobbyByCode = joinLobbyByCode;
-window.copyRoomCode = copyRoomCode;
-window.leaveLobby = leaveLobby;
-window.startMultiplayerGame = startMultiplayerGame;
-window.toggleReady = toggleReady;
-window.changeTeam = changeTeam;
-window.kickPlayer = kickPlayer;
-window.sendChatMessage = sendChatMessage;
-window.rematch = rematch;
-window.backToLobby = backToLobby;
-window.backToMenu = backToMenu;
-window.cancelQuickMatch = cancelQuickMatch;
-window.toggleEmotePanel = (idx) => showToast("Emotes coming soon");
-window.sendEmote = (key) => showToast("Emotes coming soon");
-window.sortHand = sortHand;
-window.joinLobbyById = joinLobbyById;
-window.refreshPublicLobbies = refreshPublicLobbies;
