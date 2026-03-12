@@ -60,12 +60,17 @@
 #game-app {
   height: 100vh;
   height: 100dvh;
-  display: flex;
+  display: none; /* Default hidden, controlled by .screen.active in main.css or specific logic */
   flex-direction: column;
   position: relative;
   overflow: hidden;
   padding-top: var(--safe-top);
   padding-bottom: var(--safe-bottom);
+}
+
+/* Pastikan game-app bisa aktif */
+#game-app.active {
+    display: flex;
 }
 
 /* Game Table */
@@ -516,7 +521,7 @@
   letter-spacing: 0.1em;
 }
 
-/* Drawn Card Popup */
+/* Drawn Card Popup (PERBAIKAN PENTING) */
 .drawn-card-popup {
   position: fixed;
   inset: 0;
@@ -526,13 +531,18 @@
   align-items: center;
   justify-content: center;
   z-index: 200;
+  
+  /* Sembunyikan total saat tidak aktif */
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .drawn-card-popup.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: all;
 }
 
@@ -791,7 +801,7 @@
   50% { transform: scale(1.5); opacity: 0.6; }
 }
 
-/* Color Picker */
+/* Color Picker (PERBAIKAN PENTING) */
 .color-picker-3d {
   position: fixed;
   top: 50%;
@@ -801,13 +811,18 @@
   gap: 18px;
   z-index: 200;
   perspective: 800px;
+  
+  /* Sembunyikan total */
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .color-picker-3d.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: all;
 }
 
@@ -840,7 +855,7 @@
 .color-box-3d.green { background: linear-gradient(145deg, #6bff8a, #51CF66); }
 .color-box-3d.yellow { background: linear-gradient(145deg, #ffcc00, #FFD43B); }
 
-/* Emote Panel */
+/* Emote Panel (PERBAIKAN PENTING) */
 .emote-panel {
   position: fixed;
   bottom: 200px;
@@ -851,14 +866,19 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   z-index: 150;
+  
+  /* Sembunyikan total */
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  
   transform: translateY(10px);
   transition: all 0.3s ease;
 }
 
 .emote-panel.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: all;
   transform: translateY(0);
 }
