@@ -41,12 +41,22 @@
   <!-- Fonts dengan display=swap untuk FOIT prevention -->
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
-  <!-- Styles -->
-  <link rel="stylesheet" href="styles.css">
+  <!-- ======================================== -->
+  <!-- CSS PARTS (Total 3 Files)                -->
+  <!-- ======================================== -->
   
-  <!-- Preload critical assets -->
-  <link rel="preload" href="styles.css" as="style">
-  <link rel="preload" href="app.js" as="script">
+  <!-- 1. Main Styles: Variables, Reset, Base Layout -->
+  <link rel="stylesheet" href="css/main.css">
+  
+  <!-- 2. Lobby Styles: Menu, Modals, Settings, Room List -->
+  <link rel="stylesheet" href="css/lobby.css">
+  
+  <!-- 3. Game Styles: Board, Cards, Animations, Player Deck -->
+  <link rel="stylesheet" href="css/game.css">
+
+  <!-- Preload critical assets (Update paths if needed) -->
+  <link rel="preload" href="css/main.css" as="style">
+  <link rel="preload" href="js/app.js" as="script">
 </head>
 <body>
   <!-- Skip to content untuk aksesibilitas -->
@@ -212,7 +222,6 @@
       </footer>
     </div>
 
-    <!-- [REST OF THE MODALS AND SCREENS REMAIN THE SAME BUT WITH IMPROVEMENTS...] -->
     <!-- Multiplayer Options Modal -->
     <div id="multiplayer-options-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="multiplayer-title" style="display: none;">
       <div class="glass-panel modal-content multiplayer-modal">
@@ -316,8 +325,6 @@
         </div>
       </div>
     </div>
-
-    <!-- [CONTINUE WITH OTHER SCREENS... Simplified for brevity] -->
     
     <!-- Game App -->
     <div id="game-app" class="screen" role="main" aria-label="Game Board" style="display: none;">
@@ -400,9 +407,34 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- Firebase SDK dengan defer untuk performa -->
+  <!-- ======================================== -->
+  <!-- JAVASCRIPT PARTS (Total 7 Files)         -->
+  <!-- ======================================== -->
+  
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js" defer></script>
-  <script src="app.js" defer></script>
+
+  <!-- 1. Firebase Configuration: Inisialisasi Database -->
+  <script src="js/firebase-config.js" defer></script>
+
+  <!-- 2. Utilities: Toast, Helpers, Audio Manager -->
+  <script src="js/utils.js" defer></script>
+
+  <!-- 3. AI Logic: Logika Bot/Komputer -->
+  <script src="js/ai.js" defer></script>
+
+  <!-- 4. Game Engine: Logika Kartu, Rules, State -->
+  <script src="js/game-engine.js" defer></script>
+
+  <!-- 5. Lobby Logic: Create Room, Join Room, Sync -->
+  <script src="js/lobby.js" defer></script>
+
+  <!-- 6. UI Controller: Tombol, Event Listener, Manipulasi DOM -->
+  <script src="js/ui-controller.js" defer></script>
+
+  <!-- 7. Main App: Inisialisasi dan Alur Utama -->
+  <script src="js/app.js" defer></script>
+
 </body>
 </html>
